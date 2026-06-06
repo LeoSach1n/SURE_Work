@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rutherford Scattering Simulator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <div class="control-panel">
+            <h2>Rutherford Simulator</h2>
+            
+            <div class="control-group">
+                <label>Target Nucleus</label>
+                <div class="periodic-table">
+                    <button class="element-tile active" onclick="setElement(79, this)">
+                        <span class="atomic-num">79</span>
+                        <span class="symbol">Au</span>
+                    </button>
+                    <button class="element-tile active" onclick="setElement(47, this)">
+                        <span class="atomic-num">47</span>
+                        <span class="symbol">Ag</span>
+                    </button>
+                    <button class="element-tile active" onclick="setElement(29, this)">
+                        <span class="atomic-num">29</span>
+                        <span class="symbol">Cu</span>
+                    </button>
+                    <button class="element-tile active" onclick="setElement(13, this)">
+                        <span class="atomic-num">13</span>
+                        <span class="symbol">Al</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Alpha Particle Energy</label>
+                <input type="range" id="energySlider" min="2" max="15" value="8">
+            </div>
+
+            <button id="fireBtn" onclick="fireNewParticle()">FIRE SINGLE</button>
+            <button id="burstBtn" onclick="fireBurst()" style="background-color: #ff8800; color: white; border: none; padding: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 10px;">FIRE BURST</button>
+            
+        </div>
+
+        <div id="canvas-container"></div>
+    </div>
+
+    <script src="sketch.js"></script>
+</body>
+</html>
