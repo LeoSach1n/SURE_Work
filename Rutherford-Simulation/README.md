@@ -2,6 +2,9 @@
 
 An independent, zero-dependency 2D physics simulation built to model Ernest Rutherford's gold foil experiment. This project serves as a proof-of-concept for building interactive, 60-FPS educational physics engines using lightweight web technologies.
 
+<img width="1918" height="1028" alt="image" src="https://github.com/user-attachments/assets/e409d245-aaeb-433c-b32b-a21b74c31e68" />
+
+
 ## 🛠️ Tech Stack
 * **Frontend UI:** HTML5 & CSS3 (Flexbox/Grid for a locked, responsive dashboard)
 * **Physics & Rendering Engine:** Vanilla JavaScript + p5.js (for Canvas rendering and Vector mathematics)
