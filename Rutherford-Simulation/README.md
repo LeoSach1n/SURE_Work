@@ -4,6 +4,11 @@ An independent, zero-dependency 2D physics simulation built to model Ernest Ruth
 
 <img width="1918" height="1028" alt="image" src="https://github.com/user-attachments/assets/e409d245-aaeb-433c-b32b-a21b74c31e68" />
 
+**UPDATED:**
+
+<img width="1350" height="920" alt="image" src="https://github.com/user-attachments/assets/9fe2fa3d-c5b1-4d94-98c9-ae3c30c1c88f" />
+
+
 
 ## 🛠️ Tech Stack
 * **Frontend UI:** HTML5 & CSS3 (Flexbox/Grid for a locked, responsive dashboard)
