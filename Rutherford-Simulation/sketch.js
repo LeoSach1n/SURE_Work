@@ -1,12 +1,21 @@
 // --- GLOBAL VARIABLES ---
+// let is dynamic variable , can be changed
+// const is permanently the same
+
 let nucleusPosition;
 let particles = [];
 let hitMarks = []; 
 const SIMULATION_K = 200; 
+
+// declaring k as a much lower value for convenience in the simulation and visualisation
+// else the alpha particle would get deflected instantly 
+
 let radiusSlider;
 const ALPHA_CHARGE = 2;   
 
 // Z-> Properties 
+// using dictionary instead of if/else statements
+
 const ELEMENT_DATA = {
   79: { symbol: 'Au', name: 'Gold', color: [255, 215, 0], radius: 60 },
   47: { symbol: 'Ag', name: 'Silver', color: [210, 210, 210], radius: 45 },
@@ -14,18 +23,19 @@ const ELEMENT_DATA = {
   13: { symbol: 'Al', name: 'Aluminum', color: [170, 170, 180], radius: 25 }
 };
 
-let currentTargetZ = 79;
-let boxY = 300;
+let currentTargetZ = 79; //default element : Gold
+let boxY = 300; // default y coordinate of lead box
 let isDraggingBox = false;
 
 function setup() {
   let canvas = createCanvas(800, 600);
-  canvas.parent('canvas-container'); 
+  canvas.parent('canvas-container'); // what is this?
   
   nucleusPosition = createVector(500, 300);
 
   createP('Detector Screen Radius:');
   radiusSlider = createSlider(100, 280, 220);
+  // the radius of the screen can be min 100px , max 280px and 220px by default
 }
 
 function draw() {
@@ -98,9 +108,14 @@ function draw() {
 // --- INTERACTIVITY ---
 function mousePressed() {
   if (mouseX > 10 && mouseX < 50 && mouseY > boxY - 40 && mouseY < boxY + 40) isDraggingBox = true;
+  // if the x coord of the mouse click is between box x range and similarly for y coord , then box is
+  // being dragged
 }
 function mouseDragged() {
   if (isDraggingBox) boxY = constrain(mouseY, 50, height - 50); 
+  // where is this height defined? i assume that in the line: boxY = constrain(mouseY,50,height-50)
+  // the mouseY is telling the new y coord , 50 and height-50 are the limits that boxY cant go beyond these limits
+  // on both sides
 }
 function mouseReleased() {
   isDraggingBox = false;
@@ -116,12 +131,14 @@ function setElement(z, btnElement) {
 
 function fireNewParticle() {
   let energy = document.getElementById('energySlider').value;
+  // energy slider defined in index.html , the min value is 2 , max is 15 , and default is 8
   particles.push(new AlphaParticle(45, boxY, parseFloat(energy)));
+  // the particles original x,y coord , the KE with which it is shot
 }
 
 function fireBurst() {
   let energy = document.getElementById('energySlider').value;
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 20; i++) { // 20 alpha particles are fired at once in a random 51px range 
     let spreadY = boxY + random(-25, 25);
     particles.push(new AlphaParticle(45, spreadY, parseFloat(energy)));
   }
@@ -133,6 +150,8 @@ class AlphaParticle {
     this.pos = createVector(startX, startY);
     this.vel = createVector(startSpeed, 0); 
     this.acc = createVector(0, 0); 
+    // acceleration is 0 , the alpha particle only has KE at the start , and starts to feel a 
+    // repulsive force which gives it a negative acceleration
     this.history = []; 
     this.enteredDetector = false;
     this.hasHitScreen = false;
@@ -146,21 +165,30 @@ class AlphaParticle {
     let forceMagnitude = (SIMULATION_K * ALPHA_CHARGE * targetZ) / (distance * distance);
     force.setMag(forceMagnitude);
     this.acc.add(force);
+    // didnt understand whats happening here other than the force mag calculation
   }
 
   update(nucleusPos) {
     this.vel.add(this.acc); 
     this.pos.add(this.vel); 
     this.acc.mult(0); 
+    // velocity changes as the particle experiences an acc
+    // position changes as the vel changes
+    // acc is initialised to 0 at each frame so it doesnt compound through the experiment
+
 
     this.history.push(createVector(this.pos.x, this.pos.y));
     if (this.history.length > 50) this.history.splice(0, 1);
 
-    let distToNucleus = p5.Vector.dist(this.pos, nucleusPos);
+    let distToNucleus = p5.Vector.dist(this.pos, nucleusPos); // updating the dist b/w nucleas and alpha
     
     if (distToNucleus < radiusSlider.value()) this.enteredDetector = true;
     if (this.enteredDetector === true && distToNucleus >= radiusSlider.value()) {
       this.hasHitScreen = true;
+      // if it has entered inside the detector screen radius
+      // and then the distance increases so much so that dist b/w alpha and nucleas is more than 
+      // detector screen radius , it means it entered the screen R but then it went outside also 
+      // so it has definitely hit the screen , now we update it and make a scintillation mark 
     }
   }
 
@@ -184,3 +212,8 @@ class AlphaParticle {
     text('α', this.pos.x, this.pos.y);
   }
 }
+
+
+// where is particles elements input being given , what is it even storing? the x,y coords of alpha particle?
+// how does hasHitScreen know that the particle has hit the screen?
+// what is p.update(nucleasPosition) doing
