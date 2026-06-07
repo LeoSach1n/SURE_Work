@@ -10,6 +10,11 @@ const SIMULATION_K = 200;
 // declaring k as a much lower value for convenience in the simulation and visualisation
 // else the alpha particle would get deflected instantly 
 
+// Data Tracking Variables (NEW)
+let statFired = 0;
+let statHits = 0;
+let statEscaped = 0;
+
 let radiusSlider;
 const ALPHA_CHARGE = 2;   
 
@@ -33,8 +38,9 @@ function setup() {
   
   nucleusPosition = createVector(500, 300);
 
-  createP('Detector Screen Radius:');
-  radiusSlider = createSlider(100, 280, 220);
+  // We comment these out because we built the sliders directly into the HTML UI!
+  // createP('Detector Screen Radius:');
+  // radiusSlider = createSlider(100, 280, 220);
   // the radius of the screen can be min 100px , max 280px and 220px by default
 }
 
@@ -43,14 +49,27 @@ function draw() {
 
   // Grab the current element's visual data from our dictionary
   let targetData = ELEMENT_DATA[currentTargetZ];
+  
+  // --- NEW: Draw the Electric Field first so it sits behind the nucleus ---
+  drawElectricField(targetData, currentTargetZ);
 
-  // 1. Draw the Detector Screen
+  // 1. Draw the Detector Screen (UPDATED TO ARC WITH GAP)
+  let currentRadius = document.getElementById('radiusSlider').value;
+  let gapAngleDeg = document.getElementById('gapSlider').value;
+  
+  // Convert angles to radians for p5.js
+  let gapCenterRad = radians(gapAngleDeg);
+  let gapHalfRad = radians(12); // 24 degree total gap
+
   push();
   noFill();
   stroke(180); // Lighter grey for the bright UI
   strokeWeight(3);
   drawingContext.setLineDash([10, 10]); 
-  circle(nucleusPosition.x, nucleusPosition.y, radiusSlider.value() * 2);
+  // arc() draws a curve from a start angle to an end angle, leaving the gap open
+  arc(nucleusPosition.x, nucleusPosition.y, currentRadius * 2, currentRadius * 2, 
+      gapCenterRad + gapHalfRad, 
+      gapCenterRad - gapHalfRad + TWO_PI);
   drawingContext.setLineDash([]); 
   pop();
 
@@ -87,19 +106,35 @@ function draw() {
   rect(45, boxY, 15, 8); 
   pop();
 
-  // 5. Process Particles
+  // 5. Process Particles (UPDATED WITH STATE MACHINE)
   for (let i = particles.length - 1; i >= 0; i--) {
     let p = particles[i];
     p.applyRepulsion(nucleusPosition, currentTargetZ);
     p.update(nucleusPosition); 
     p.show();
 
-    if (p.hasHitScreen) {
+    // --- THE UPDATED STATE MACHINE ROUTER ---
+    if (p.state === 'HIT') {
       hitMarks.push(createVector(p.pos.x, p.pos.y));
       if (hitMarks.length > 50) hitMarks.splice(0, 1);
-      particles.splice(i, 1);
+      
+      statHits++;
+      document.getElementById('statHits').innerText = statHits;
+      particles.splice(i, 1); // Delete the particle because it hit a wall
     } 
+    else if (p.state === 'ESCAPED') {
+      statEscaped++;
+      document.getElementById('statEscaped').innerText = statEscaped;
+      
+      // IMPORTANT: Do not splice (delete) it here!
+      // Change state to FLYING_AWAY so we don't count it again.
+      p.state = 'FLYING_AWAY'; 
+    }
+    else if (p.state === 'BLOCKED') {
+      particles.splice(i, 1); // Delete instantly (crashed into outside of screen)
+    }
     else if (p.pos.x > width + 50 || p.pos.y < -50 || p.pos.y > height + 50 || p.pos.x < -50) {
+      // THE FAILSAFE: Deletes FLYING_AWAY particles once off screen.
       particles.splice(i, 1);
     }
   }
@@ -134,6 +169,10 @@ function fireNewParticle() {
   // energy slider defined in index.html , the min value is 2 , max is 15 , and default is 8
   particles.push(new AlphaParticle(45, boxY, parseFloat(energy)));
   // the particles original x,y coord , the KE with which it is shot
+  
+  // UPDATE LIVE STATS
+  statFired++;
+  document.getElementById('statFired').innerText = statFired;
 }
 
 function fireBurst() {
@@ -142,6 +181,20 @@ function fireBurst() {
     let spreadY = boxY + random(-25, 25);
     particles.push(new AlphaParticle(45, spreadY, parseFloat(energy)));
   }
+  
+  // UPDATE LIVE STATS
+  statFired += 20;
+  document.getElementById('statFired').innerText = statFired;
+}
+
+// NEW: Function to reset the lab
+function clearExperiment() {
+  particles = [];
+  hitMarks = [];
+  statFired = 0; statHits = 0; statEscaped = 0;
+  document.getElementById('statFired').innerText = 0;
+  document.getElementById('statHits').innerText = 0;
+  document.getElementById('statEscaped').innerText = 0;
 }
 
 // ---------------------------------------------------------
@@ -153,8 +206,9 @@ class AlphaParticle {
     // acceleration is 0 , the alpha particle only has KE at the start , and starts to feel a 
     // repulsive force which gives it a negative acceleration
     this.history = []; 
-    this.enteredDetector = false;
-    this.hasHitScreen = false;
+    
+    // NEW: We start outside the detector screen using a State Machine
+    this.state = 'OUTSIDE'; 
   }
 
   applyRepulsion(targetVector, targetZ) {
@@ -176,19 +230,44 @@ class AlphaParticle {
     // position changes as the vel changes
     // acc is initialised to 0 at each frame so it doesnt compound through the experiment
 
-
     this.history.push(createVector(this.pos.x, this.pos.y));
     if (this.history.length > 50) this.history.splice(0, 1);
 
+    let currentRadius = document.getElementById('radiusSlider').value;
     let distToNucleus = p5.Vector.dist(this.pos, nucleusPos); // updating the dist b/w nucleas and alpha
     
-    if (distToNucleus < radiusSlider.value()) this.enteredDetector = true;
-    if (this.enteredDetector === true && distToNucleus >= radiusSlider.value()) {
-      this.hasHitScreen = true;
-      // if it has entered inside the detector screen radius
-      // and then the distance increases so much so that dist b/w alpha and nucleas is more than 
-      // detector screen radius , it means it entered the screen R but then it went outside also 
-      // so it has definitely hit the screen , now we update it and make a scintillation mark 
+    // Calculate current angle relative to the nucleus
+    let angle = atan2(this.pos.y - nucleusPos.y, this.pos.x - nucleusPos.x); 
+    let angleDeg = degrees(angle);
+    if (angleDeg < 0) angleDeg += 360; 
+
+    // Calculate gap boundaries
+    let gapCenter = parseInt(document.getElementById('gapSlider').value);
+    let gapHalfWidth = 12; // 24 degree wide opening
+    let diff = Math.abs(angleDeg - gapCenter) % 360;
+    let shortestDiff = diff > 180 ? 360 - diff : diff;
+    let isInGap = shortestDiff <= gapHalfWidth;
+
+    // --- THE FINITE STATE MACHINE ---
+    if (this.state === 'OUTSIDE') {
+      // Is it crossing the boundary moving INWARDS?
+      if (distToNucleus < currentRadius) {
+        if (isInGap) {
+          this.state = 'INSIDE'; // Safely entered through the gap
+        } else {
+          this.state = 'BLOCKED'; // Crashed into outer wall!
+        }
+      }
+    } 
+    else if (this.state === 'INSIDE') {
+      // Is it crossing the boundary moving OUTWARDS?
+      if (distToNucleus >= currentRadius) {
+        if (isInGap) {
+          this.state = 'ESCAPED'; // Found the exit hole
+        } else {
+          this.state = 'HIT'; // Hit inner wall (Scintillation!)
+        }
+      }
     }
   }
 
@@ -213,7 +292,36 @@ class AlphaParticle {
   }
 }
 
-
 // where is particles elements input being given , what is it even storing? the x,y coords of alpha particle?
 // how does hasHitScreen know that the particle has hit the screen?
 // what is p.update(nucleasPosition) doing
+
+// --- NEW VISUALIZATION FUNCTION ---
+function drawElectricField(targetData, zValue) {
+  // 1. Check if the user turned the toggle off
+  let showField = document.getElementById('fieldToggle').checked;
+  if (!showField) return; // If off, exit the function immediately
+
+  push();
+  noFill();
+  
+  // 2. Calculate the visual reach of the field based on the element's charge (Z)
+  // Gold (79) will reach out ~316 pixels. Aluminum (13) will only reach ~52 pixels.
+  let maxFieldReach = zValue * 4; 
+  
+  // 3. Draw concentric rings starting just outside the nucleus
+  for (let r = targetData.radius + 15; r < maxFieldReach; r += 20) {
+    
+    // 4. Calculate Opacity: Strong near the center, fading to 0 at the edge
+    // map() takes a value (r) within a current range, and translates it to a new range (opacity)
+    let opacity = map(r, targetData.radius, maxFieldReach, 120, 0);
+    
+    // Use the color of the target element, but apply our calculated fading opacity
+    stroke(targetData.color[0], targetData.color[1], targetData.color[2], opacity);
+    strokeWeight(1.5);
+    
+    // Draw the ring
+    circle(nucleusPosition.x, nucleusPosition.y, r * 2);
+  }
+  pop();
+}

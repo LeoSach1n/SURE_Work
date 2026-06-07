@@ -12,39 +12,65 @@
         <div class="control-panel">
             <h2>Rutherford Simulator</h2>
             
-            <div class="control-group">
+            <div class="panel-section">
+                <h3>1. Apparatus Setup</h3>
+                
                 <label>Target Nucleus</label>
                 <div class="periodic-table">
                     <button class="element-tile active" onclick="setElement(79, this)">
                         <span class="atomic-num">79</span>
                         <span class="symbol">Au</span>
                     </button>
-                    <button class="element-tile active" onclick="setElement(47, this)">
+                    <button class="element-tile" onclick="setElement(47, this)">
                         <span class="atomic-num">47</span>
                         <span class="symbol">Ag</span>
                     </button>
-                    <button class="element-tile active" onclick="setElement(29, this)">
+                    <button class="element-tile" onclick="setElement(29, this)">
                         <span class="atomic-num">29</span>
                         <span class="symbol">Cu</span>
                     </button>
-                    <button class="element-tile active" onclick="setElement(13, this)">
+                    <button class="element-tile" onclick="setElement(13, this)">
                         <span class="atomic-num">13</span>
                         <span class="symbol">Al</span>
                     </button>
                 </div>
+
+                <label>Detector Radius</label>
+                <input type="range" id="radiusSlider" min="100" max="280" value="220">
+
+                <label>Detector Gap Angle (Rotation)</label>
+                <input type="range" id="gapSlider" min="0" max="360" value="180">
+
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #0056b3; font-weight: bold; margin-top:10px;">
+                    <input type="checkbox" id="fieldToggle" checked style="width: 18px; height: 18px;"> 
+                    Show Electric Field
+                </label>
             </div>
 
-            <div class="control-group">
+            <div class="panel-section">
+                <h3>2. Beam Controls</h3>
                 <label>Alpha Particle Energy</label>
                 <input type="range" id="energySlider" min="2" max="15" value="8">
+                
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button id="fireBtn" class="action-btn" onclick="fireNewParticle()">SINGLE</button>
+                    <button id="burstBtn" class="action-btn burst" onclick="fireBurst()">BURST</button>
+                </div>
+                <button class="action-btn clear" onclick="clearExperiment()">CLEAR DATA & SCREEN</button>
             </div>
 
-            <button id="fireBtn" onclick="fireNewParticle()">FIRE SINGLE</button>
-            <button id="burstBtn" onclick="fireBurst()" style="background-color: #ff8800; color: white; border: none; padding: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 10px;">FIRE BURST</button>
-            
         </div>
 
-        <div id="canvas-container"></div>
+        <div class="right-column">
+            <div id="canvas-container"></div>
+            
+            <div class="panel-section data-readout">
+                <p>Total Fired: <span id="statFired" class="stat-num">0</span></p>
+                <p>Screen Hits: <span id="statHits" class="stat-num">0</span></p>
+                <p>Escaped (Gap): <span id="statEscaped" class="stat-num">0</span></p>
+            </div>
+        </div>
+    </div>
     </div>
 
     <script src="sketch.js"></script>

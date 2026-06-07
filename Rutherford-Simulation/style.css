@@ -107,3 +107,84 @@ input[type=range] { width: 100%; cursor: pointer; }
     border: 1px solid #dee2e6;
     box-shadow: inset 0px 0px 10px rgba(0,0,0,0.05);
 }
+
+/* Add this to the bottom of your style.css */
+
+.panel-section {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.panel-section h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 5px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 10px;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #0056b3;
+    color: white;
+}
+
+.action-btn.burst { background-color: #ff8800; }
+.action-btn.clear { background-color: #dc3545; margin-top: 5px; }
+.action-btn:hover { filter: brightness(1.1); }
+
+.data-readout {
+    background-color: #e2e3e5;
+    border-left: 5px solid #0056b3;
+}
+
+.data-readout p {
+    font-size: 14px;
+    margin: 5px 0;
+    font-weight: bold;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+}
+
+.stat-num {
+    background: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #0056b3;
+}
+
+/* Container for the right side */
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Space between canvas and stats */
+}
+
+/* Override the data-readout to be horizontal */
+.data-readout {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    padding: 20px;
+}
+
+.data-readout p {
+    font-size: 16px; /* Make text a bit larger to fill the space */
+    margin: 0;
+}
+
+.stat-num {
+    font-size: 18px;
+    padding: 4px 12px;
+}
