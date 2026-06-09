@@ -42,6 +42,11 @@
                 <input type="range" id="gapSlider" min="0" max="360" value="180">
 
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #0056b3; font-weight: bold; margin-top:10px;">
+                    <input type="checkbox" id="pointNucleusToggle" style="width: 18px; height: 18px;"> 
+                    Point-Sized Nucleus
+                </label>
+
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #0056b3; font-weight: bold; margin-top:10px;">
                     <input type="checkbox" id="fieldToggle" checked style="width: 18px; height: 18px;"> 
                     Show Electric Field
                 </label>
@@ -50,7 +55,7 @@
             <div class="panel-section">
                 <h3>2. Beam Controls</h3>
                 <label>Alpha Particle Energy</label>
-                <input type="range" id="energySlider" min="2" max="15" value="8">
+                <input type="range" id="energySlider" min="2" max="25" value="11">
                 
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button id="fireBtn" class="action-btn" onclick="fireNewParticle()">SINGLE</button>

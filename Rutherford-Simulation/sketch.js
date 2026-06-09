@@ -2,10 +2,12 @@
 // let is dynamic variable , can be changed
 // const is permanently the same
 
+let sessionLog = []; 
+let sessionStartTime = Date.now(); //logs the session and activites performed in it
 let nucleusPosition;
 let particles = [];
 let hitMarks = []; 
-const SIMULATION_K = 200; 
+const SIMULATION_K = 45; 
 
 // declaring k as a much lower value for convenience in the simulation and visualisation
 // else the alpha particle would get deflected instantly 
@@ -73,17 +75,23 @@ function draw() {
   drawingContext.setLineDash([]); 
   pop();
 
-  // 2. Draw the Target Nucleus (Dynamic Size & Color)
+  // 2. Draw the Target Nucleus (Dynamic Size & Color & Point Toggle)
+  let toggleEl = document.getElementById('pointNucleusToggle');
+  let isPoint = toggleEl ? toggleEl.checked : false;
+  let currentDrawRadius = isPoint ? 5 : targetData.radius;
+
   fill(targetData.color);
   stroke(100); 
   strokeWeight(2);
-  circle(nucleusPosition.x, nucleusPosition.y, targetData.radius * 2);
+  circle(nucleusPosition.x, nucleusPosition.y, currentDrawRadius * 2);
   
-  fill(0);
-  noStroke();
-  textSize(targetData.radius * 0.6); 
-  textAlign(CENTER, CENTER);
-  text(targetData.symbol, nucleusPosition.x, nucleusPosition.y);
+  if (!isPoint) { // Only draw symbol text if it is NOT point-sized
+    fill(0);
+    noStroke();
+    textSize(targetData.radius * 0.6); 
+    textAlign(CENTER, CENTER);
+    text(targetData.symbol, nucleusPosition.x, nucleusPosition.y);
+  }
 
   // 3. Draw the Scintillation Marks (Darker for bright UI)
   for (let mark of hitMarks) {
@@ -131,7 +139,7 @@ function draw() {
       p.state = 'FLYING_AWAY'; 
     }
     else if (p.state === 'BLOCKED') {
-      particles.splice(i, 1); // Delete instantly (crashed into outside of screen)
+      particles.splice(i, 1); // Delete instantly (crashed into outside of screen without hitting)
     }
     else if (p.pos.x > width + 50 || p.pos.y < -50 || p.pos.y > height + 50 || p.pos.x < -50) {
       // THE FAILSAFE: Deletes FLYING_AWAY particles once off screen.
@@ -162,6 +170,8 @@ function setElement(z, btnElement) {
   let buttons = document.getElementsByClassName('element-tile');
   for (let b of buttons) { b.classList.remove('active'); }
   btnElement.classList.add('active');
+
+  logEvent('CHANGED_ELEMENT'); // Log this element change event for analytics
 }
 
 function fireNewParticle() {
@@ -173,6 +183,8 @@ function fireNewParticle() {
   // UPDATE LIVE STATS
   statFired++;
   document.getElementById('statFired').innerText = statFired;
+
+  logEvent('FIRED_SINGLE'); // Log this firing event for analytics
 }
 
 function fireBurst() {
@@ -185,6 +197,7 @@ function fireBurst() {
   // UPDATE LIVE STATS
   statFired += 20;
   document.getElementById('statFired').innerText = statFired;
+  logEvent('FIRED_BURST'); // Log this burst event for analytics
 }
 
 // NEW: Function to reset the lab
@@ -195,6 +208,7 @@ function clearExperiment() {
   document.getElementById('statFired').innerText = 0;
   document.getElementById('statHits').innerText = 0;
   document.getElementById('statEscaped').innerText = 0;
+  logEvent('CLEARED_DATA'); // Log this event for analytics
 }
 
 // ---------------------------------------------------------
@@ -207,14 +221,20 @@ class AlphaParticle {
     // repulsive force which gives it a negative acceleration
     this.history = []; 
     
-    // NEW: We start outside the detector screen using a State Machine
+    // We start outside the detector screen using a State Machine
     this.state = 'OUTSIDE'; 
   }
 
   applyRepulsion(targetVector, targetZ) {
     let force = p5.Vector.sub(this.pos, targetVector);
     let distance = force.mag();
-    distance = constrain(distance, targetVector.radius || 15, 1000); 
+    
+    // Check if nucleus is point-sized to determine how close particle can get
+    let toggleEl = document.getElementById('pointNucleusToggle');
+    let isPoint = toggleEl ? toggleEl.checked : false;
+    let physicsRadius = isPoint ? 5 : (targetVector.radius || 15);
+    
+    distance = constrain(distance, physicsRadius, 1000); 
 
     let forceMagnitude = (SIMULATION_K * ALPHA_CHARGE * targetZ) / (distance * distance);
     force.setMag(forceMagnitude);
@@ -255,7 +275,7 @@ class AlphaParticle {
         if (isInGap) {
           this.state = 'INSIDE'; // Safely entered through the gap
         } else {
-          this.state = 'BLOCKED'; // Crashed into outer wall!
+          this.state = 'HIT'; // BACKSCATTERING HIT: Crashed into outer wall and leaves a mark!
         }
       }
     } 
@@ -324,4 +344,34 @@ function drawElectricField(targetData, zValue) {
     circle(nucleusPosition.x, nucleusPosition.y, r * 2);
   }
   pop();
+}
+
+//logging function to track user interactions and lab state changes for analytics and debugging purposes
+function logEvent(eventName) {
+  let currentZ = currentTargetZ;
+  let currentEnergy = document.getElementById('energySlider').value;
+  let currentGap = document.getElementById('gapSlider').value;
+  
+  let toggleEl = document.getElementById('pointNucleusToggle');
+  let isPointSizedChecked = toggleEl ? toggleEl.checked : false;
+
+  let eventPayload = {
+    timestamp: new Date().toISOString(),
+    timeSinceStartMs: Date.now() - sessionStartTime,
+    action: eventName,
+    labState: {
+      targetZ: currentZ,
+      beamEnergy: parseInt(currentEnergy),
+      detectorGapAngle: parseInt(currentGap),
+      isPointSized: isPointSizedChecked // Logs if the point nucleus toggle is active
+    },
+    currentStats: {
+      fired: statFired,
+      hits: statHits,
+      escaped: statEscaped
+    }
+  };
+
+  sessionLog.push(eventPayload);
+  console.log("Telemetry Logged:", eventPayload); // Prints to your browser console
 }
