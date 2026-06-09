@@ -8,6 +8,9 @@ An independent, zero-dependency 2D physics simulation built to model Ernest Ruth
 
 <img width="1350" height="920" alt="image" src="https://github.com/user-attachments/assets/9fe2fa3d-c5b1-4d94-98c9-ae3c30c1c88f" />
 
+**UPDATED:**
+
+<img width="1257" height="890" alt="image" src="https://github.com/user-attachments/assets/2423caea-d7b5-4cf3-9fa3-11af56405c9e" />
 
 
 ## 🛠️ Tech Stack
