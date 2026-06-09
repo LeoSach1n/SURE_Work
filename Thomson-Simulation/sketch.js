@@ -25,7 +25,7 @@ const PLATE_END = GUN_X + (PLATE_END_M * PX_PER_METER);
 const SCREEN_X = GUN_X + (SCREEN_M * PX_PER_METER);
 
 function setup() {
-  let canvas = createCanvas(800, 500);
+  let canvas = createCanvas(900, 600);
   canvas.parent('canvas-container');
   updatePhysics();
 }
@@ -63,8 +63,16 @@ function draw() {
   drawingContext.setLineDash([]);
 
   // 4. Draw Magnetic Coils
-  if (currentPhase >= 2) {
-    stroke(0, 86, 179, 80); strokeWeight(4); drawingContext.setLineDash([15, 15]);
+  if (currentPhase == 2) {
+    stroke(0, 86, 179, 250); strokeWeight(5); drawingContext.setLineDash([15, 15]);
+    noFill(); circle((PLATE_START + PLATE_END)/2, CENTER_Y, 150);
+    drawingContext.setLineDash([]);
+    noStroke(); fill(0, 86, 179, 250); textAlign(CENTER);
+    text("B-Field Coils", (PLATE_START + PLATE_END)/2, CENTER_Y + 90);
+  }
+
+  else if (currentPhase == 3) {
+    stroke(0, 86, 179, 150); strokeWeight(5); drawingContext.setLineDash([15, 15]);
     noFill(); circle((PLATE_START + PLATE_END)/2, CENTER_Y, 150);
     drawingContext.setLineDash([]);
     noStroke(); fill(0, 86, 179, 150); textAlign(CENTER);
@@ -72,9 +80,11 @@ function draw() {
   }
 
   // 5. Draw Electric Plates (Wider Gap)
-  fill(217, 83, 79); // Red (+)
+
+  let plateAlpha = (currentPhase==2)?50:255;
+  fill(217, 83, 79,plateAlpha); // Red (+)
   rect(PLATE_START, CENTER_Y - 50, PLATE_END - PLATE_START, 8, 3);
-  fill(50, 50, 50); // Dark (-)
+  fill(50, 50, 50,plateAlpha); // Dark (-)
   rect(PLATE_START, CENTER_Y + 42, PLATE_END - PLATE_START, 8, 3);
 
   // 6. Draw Continuous Beam
@@ -123,6 +133,16 @@ function draw() {
     fill(200, 50, 50); noStroke(); textAlign(LEFT, CENTER); textSize(14);
     text(`y = ${Math.abs(deflectionY_cm).toFixed(2)} cm`, SCREEN_X + 35, (CENTER_Y + finalY)/2);
   }
+
+  // 9. Formula Cheat Sheet (Bottom Left)
+  fill(80); noStroke(); textAlign(LEFT, BOTTOM); textStyle(NORMAL); textSize(12);
+  let textBaseY = height - 15;
+  text("e/m = 2yE / (B²L²)", 20, textBaseY);
+  text("v = E / B", 20, textBaseY - 20);
+  text("Fm = evB  (Fleming's Left-Hand Rule)", 20, textBaseY - 40);
+  text("Fe = eE", 20, textBaseY - 60);
+  textStyle(BOLD); fill(50);
+  text("Governing Formulas:", 20, textBaseY - 80);
 
   // Update UI Readouts
   document.getElementById('valE').innerText = valE;
@@ -197,16 +217,16 @@ function updatePhysics() {
 // --- EXPERIMENTAL MATH VALIDATOR ---
 function calculateEM() {
   let y_cm = parseFloat(document.getElementById('inpY').value);
-  let E1 = parseFloat(document.getElementById('inpE1').value);
   let E3 = parseFloat(document.getElementById('inpE3').value);
   let B_uT = parseFloat(document.getElementById('inpB').value);
 
-  if (isNaN(y_cm) || isNaN(E1) || isNaN(E3) || isNaN(B_uT)) {
-    alert("Please fill out all measurement fields.");
+  // 1. Validation for the 3 fields
+  if (isNaN(y_cm) || isNaN(E3) || isNaN(B_uT)) {
+    alert("Please fill out all 3 measurement fields.");
     return;
   }
 
-  // Convert to Standard SI Units
+  // 2. Convert to Standard SI Units
   let y_m = y_cm * 0.01;
   let B = B_uT * 1e-6;
   
@@ -214,21 +234,22 @@ function calculateEM() {
   let L = 0.1; // 10cm plate
   let D = 0.15; // 15cm drift to screen
 
-  // 1. Calculate Velocity from Phase 3 Balance
+  // 3. Calculate Velocity
   let v = E3 / B;
 
-  // 2. Calculate e/m from Phase 1 Deflection
-  // Formula: Y_total = (e*E*L / m*v^2) * (L/2 + D)
-  let calculatedEM = (y_m * v * v) / (E1 * L * ((L / 2) + D));
+  // 4. Calculate e/m using E3 for the field strength
+  let calculatedEM = (y_m * v * v) / (E3 * L * ((L / 2) + D));
 
-  // Output formatting
+  // 5. Output formatting
   let output = document.getElementById('mathOutput');
   let exponent = Math.floor(Math.log10(calculatedEM));
   let base = (calculatedEM / Math.pow(10, exponent)).toFixed(2);
   
-  output.innerText = `${base} × 10^${exponent} C/kg`;
+  // 6. Calculate and Display Error Percentage
+  let errorPct = (Math.abs(calculatedEM - E_M_RATIO) / E_M_RATIO) * 100;
   
-  // Color code based on accuracy to true 1.76e11
-  let error = Math.abs(calculatedEM - 1.76e11) / 1.76e11;
-  output.style.color = (error < 0.05) ? "#28a745" : "#dc3545";
+  output.innerText = `${base} × 10^${exponent} C/kg   |   Error: ${errorPct.toFixed(2)}%`;
+  
+  // Color code based on accuracy
+  output.style.color = (errorPct < 5.0) ? "#28a745" : "#dc3545";
 }
