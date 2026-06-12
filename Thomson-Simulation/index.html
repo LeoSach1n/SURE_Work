@@ -1,99 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.J. Thomson e/m Simulator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thomson e/m Simulation</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+  
+  <style>
+    body { background-color: #f8f9fa; }
+    #canvas-container canvas { display: block; margin: 0 auto; }
+  </style>
 </head>
 <body>
-    <div class="dashboard" style="flex-direction: column; max-width: 95vw;">
-        
-        <div style="display: flex; gap: 30px; width: 100%;">
-            
-            <div class="control-panel">
-                <h2>Thomson e/m Sim</h2>
-                
-                <div class="panel-section">
-                    <h3>1. Experiment Phase</h3>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button id="btnPhase1" class="action-btn" onclick="setPhase(1)">1. Electric Field Only</button>
-                        <button id="btnPhase2" class="action-btn" style="background-color: #6c757d;" onclick="setPhase(2)">2. Magnetic Field Only</button>
-                        <button id="btnPhase3" class="action-btn" style="background-color: #6c757d;" onclick="setPhase(3)">3. Balance Fields</button>
-                    </div>
-                </div>
 
-                <div class="panel-section">
-                    <h3>2. Field Controls</h3>
-                    
-                    <label>Electric Field (E) - V/m</label>
-                    <input type="range" id="sliderE" min="0" max="2000" value="0" step="50" oninput="updatePhysics()">
-                    
-                    <label style="margin-top: 15px;">Magnetic Field (B) - µT</label>
-                    <input type="range" id="sliderB" min="0" max="500" value="0" step="10" oninput="updatePhysics()" disabled>
-                </div>
-                
-                <div class="panel-section instructions" style="margin-top: 10px;">
-                    <strong>System Constants:</strong><br>
-                    Plate Length (L) = 10 cm<br>
-                    Drift Distance (D) = 15 cm
-                </div>
-            </div>
-
-            <div id="canvas-container" style="display: flex; align-items: center; justify-content: center;"></div>
-
-            <div class="control-panel" style="width: 200px;">
-                <h2 style="visibility: hidden;">Spacer</h2> 
-                
-                <div class="panel-section data-readout" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; border-left: none; border-top: 5px solid #0056b3;">
-                    <h3 style="margin-top: 0; text-align: center;">Live Readings</h3>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 35px; width: 100%; margin-top: 30px;">
-                        <div style="text-align: center;">
-                            <p style="margin: 0 0 5px 0; font-size: 14px; color: #666; font-weight: bold;">E-Field (V/m)</p>
-                            <span id="valE" class="stat-num" style="color:#d9534f; font-size: 24px;">0</span>
-                        </div>
-                        <div style="text-align: center;">
-                            <p style="margin: 0 0 5px 0; font-size: 14px; color: #666; font-weight: bold;">B-Field (µT)</p>
-                            <span id="valB" class="stat-num" style="color:#0056b3; font-size: 24px;">0</span>
-                        </div>
-                        <div style="text-align: center;">
-                            <p style="margin: 0 0 5px 0; font-size: 14px; color: #666; font-weight: bold;">Deflection (y) cm</p>
-                            <span id="valY" class="stat-num" style="font-size: 24px; color: #333;">0.00</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="container-fluid mt-4">
+  <div class="row">
+    
+    <div class="col-lg-3">
+      
+      <div class="card mb-3 shadow-sm border-0">
+        <div class="card-header bg-light fw-bold">1. Experiment Phase</div>
+        <div class="card-body">
+          <button class="btn btn-primary w-100 mb-2" id="btnPhase1" onclick="setPhase(1)">1. Electric Field Only</button>
+          <button class="btn btn-secondary w-100 mb-2" id="btnPhase2" onclick="setPhase(2)">2. Magnetic Field Only</button>
+          <button class="btn btn-secondary w-100" id="btnPhase3" onclick="setPhase(3)">3. Balance Fields</button>
         </div>
+      </div>
 
-        <div class="panel-section" style="margin-top: 10px; width: 100%; box-sizing: border-box;">
-            <h3 style="margin-top: 0; font-size: 14px; text-align: center;">Experimental Data Entry</h3>
-            
-            <div style="display: flex; gap: 20px; align-items: center; justify-content: center; margin-top: 15px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <label style="font-size: 12px; font-weight: bold; color: #495057;">Deflection y (cm):</label>
-                    <input type="number" id="inpY" step="0.01" style="width: 80px; padding: 6px;">
-                </div>
-                
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <label style="font-size: 12px; font-weight: bold; color: #495057;">E-Field (V/m):</label>
-                    <input type="number" id="inpE3" step="1" style="width: 80px; padding: 6px;">
-                </div>
-                
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <label style="font-size: 12px; font-weight: bold; color: #495057;">Balancing B-Field (µT):</label>
-                    <input type="number" id="inpB" step="0.1" style="width: 80px; padding: 6px;">
-                </div>
-            </div>
+      <div class="card mb-3 shadow-sm border-0">
+        <div class="card-header bg-light fw-bold">2. Apparatus Controls</div>
+        <div class="card-body">
+          
+          <label class="form-label text-muted fw-bold mb-0">Accelerating Voltage (V)</label>
+          <div class="d-flex align-items-center mb-3">
+            <input type="range" class="form-range" id="sliderVoltage" min="100" max="1000" value="284" oninput="updatePhysics()">
+            <span class="ms-2 badge bg-primary" id="valVoltage">284</span>
+          </div>
 
-            <div style="display: flex; justify-content: center; gap: 30px; margin-top: 25px; margin-bottom: 10px; align-items: center;">
-                <button class="action-btn" onclick="calculateEM()" style="background-color: #28a745; padding: 10px 30px; font-size: 14px; max-width: 250px;">CALCULATE e/m</button>
-                <div id="mathOutput" style="font-weight: bold; font-size: 16px; color: #0056b3;">---</div>
-            </div>
+          <label class="form-label text-muted fw-bold mb-0">Tube Rotation (°)</label>
+          <div class="d-flex align-items-center mb-3">
+            <input type="range" class="form-range" id="sliderRotation" min="0" max="360" value="0" oninput="updatePhysics()">
+            <span class="ms-2 badge bg-dark" id="valRotation">0</span>
+          </div>
+
+          <hr> <label class="form-label text-muted fw-bold mb-0">Electric Field (E) - V/m</label>
+          <div class="d-flex align-items-center mb-3">
+            <input type="range" class="form-range" id="sliderE" min="-5000" max="5000" value="0" oninput="updatePhysics()">
+            <span class="ms-2 badge bg-danger" id="valE">0</span>
+          </div>
+
+          <label class="form-label text-muted fw-bold mb-0">Magnetic Field (B) - μT</label>
+          <div class="d-flex align-items-center">
+            <input type="range" class="form-range" id="sliderB" min="-500" max="500" value="0" oninput="updatePhysics()">
+            <span class="ms-2 badge bg-info text-dark" id="valB">0</span>
+          </div>
+
         </div>
+      </div>
     </div>
 
-    <script src="sketch.js"></script>
+    <div class="col-lg-7 d-flex flex-column align-items-center">
+      <button class="btn btn-dark btn-lg w-75 mb-3 fw-bold shadow-sm" id="btnViewToggle" onclick="toggleView()">
+        <i class="bi bi-camera"></i> SWITCH TO FRONT OSCILLOSCOPE VIEW
+      </button>
+      
+      <div id="canvas-container" class="shadow rounded overflow-hidden border"></div>
+    </div>
+
+    <div class="col-lg-2">
+      <div class="card shadow-sm border-0 bg-light">
+        <div class="card-header bg-dark text-white fw-bold text-center">Live Sensors</div>
+        <div class="card-body text-center">
+          
+          <h6 class="text-muted mb-0">E-Field (V/m)</h6>
+          <h4 class="text-danger fw-bold mb-3" id="readE">0</h4>
+
+          <h6 class="text-muted mb-0">B-Field (μT)</h6>
+          <h4 class="text-info fw-bold mb-3" id="readB">0</h4>
+
+          <h6 class="text-muted mb-0">Deflection (y) cm</h6>
+          <h3 class="text-success fw-bold" id="readY">0.00</h3>
+          
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="sketch.js"></script>
 </body>
 </html>
