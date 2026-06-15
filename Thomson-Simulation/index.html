@@ -7,88 +7,112 @@
   
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
   
   <style>
-    body { background-color: #f8f9fa; }
-    #canvas-container canvas { display: block; margin: 0 auto; }
+    /* Soft background for the whole page */
+    body { background-color: #e9ecef; padding-bottom: 50px; }
+    #canvas-container canvas { display: block; margin: 0 auto; border-radius: 8px; }
+    
+    /* Custom styling to match the sleek reference */
+    .app-container { background-color: #ffffff; border-radius: 12px; }
+    .section-header { font-size: 0.85rem; font-weight: 700; color: #495057; border-bottom: 2px solid #dee2e6; padding-bottom: 5px; margin-bottom: 15px; }
+    .control-label { font-size: 0.85rem; font-weight: 600; color: #6c757d; }
+    .sensor-bar { background-color: #e2e3e5; border-radius: 8px; border-left: 6px solid #0d6efd; }
+    .sensor-value { background-color: white; border: 1px solid #ced4da; border-radius: 4px; padding: 2px 10px; }
   </style>
 </head>
 <body>
 
-<div class="container-fluid mt-4">
-  <div class="row">
+<div class="container mt-4">
+  <div class="app-container shadow-lg p-4 border border-light">
     
-    <div class="col-lg-3">
-      
-      <div class="card mb-3 shadow-sm border-0">
-        <div class="card-header bg-light fw-bold">1. Experiment Phase</div>
-        <div class="card-body">
-          <button class="btn btn-primary w-100 mb-2" id="btnPhase1" onclick="setPhase(1)">1. Electric Field Only</button>
-          <button class="btn btn-secondary w-100 mb-2" id="btnPhase2" onclick="setPhase(2)">2. Magnetic Field Only</button>
-          <button class="btn btn-secondary w-100" id="btnPhase3" onclick="setPhase(3)">3. Balance Fields</button>
-        </div>
-      </div>
+    <h4 class="text-primary fw-bold mb-4">Thomson e/m Simulator</h4>
 
-      <div class="card mb-3 shadow-sm border-0">
-        <div class="card-header bg-light fw-bold">2. Apparatus Controls</div>
-        <div class="card-body">
+    <div class="row">
+      
+      <div class="col-lg-3 pe-lg-4">
+        
+        <div class="mb-4">
+          <div class="section-header">1. Experiment Phase</div>
+          <button class="btn btn-primary btn-sm w-100 mb-2 fw-bold" id="btnPhase1" onclick="setPhase(1)">1. Electric Field Only</button>
+          <button class="btn btn-outline-secondary btn-sm w-100 mb-2 fw-bold" id="btnPhase2" onclick="setPhase(2)">2. Magnetic Field Only</button>
+          <button class="btn btn-outline-secondary btn-sm w-100 fw-bold" id="btnPhase3" onclick="setPhase(3)">3. Balance Fields</button>
+        </div>
+
+        <div class="mb-4">
+          <div class="section-header">2. Apparatus Controls</div>
           
-          <label class="form-label text-muted fw-bold mb-0">Accelerating Voltage (V)</label>
+          <label class="control-label mb-1">Accelerating Voltage (V)</label>
           <div class="d-flex align-items-center mb-3">
             <input type="range" class="form-range" id="sliderVoltage" min="100" max="1000" value="284" oninput="updatePhysics()">
             <span class="ms-2 badge bg-primary" id="valVoltage">284</span>
           </div>
 
-          <label class="form-label text-muted fw-bold mb-0">Tube Rotation (°)</label>
-          <div class="d-flex align-items-center mb-3">
+          <label class="control-label mb-1">Tube Rotation (°)</label>
+          <div class="d-flex align-items-center mb-4">
             <input type="range" class="form-range" id="sliderRotation" min="0" max="360" value="0" oninput="updatePhysics()">
             <span class="ms-2 badge bg-dark" id="valRotation">0</span>
           </div>
 
-          <hr> <label class="form-label text-muted fw-bold mb-0">Electric Field (E) - V/m</label>
+          <label class="control-label mb-1">Electric Field (E) - V/m</label>
           <div class="d-flex align-items-center mb-3">
-            <input type="range" class="form-range" id="sliderE" min="-5000" max="5000" value="0" oninput="updatePhysics()">
+            <input type="range" class="form-range" id="sliderE" min="0" max="5000" value="0" oninput="updatePhysics()">
             <span class="ms-2 badge bg-danger" id="valE">0</span>
           </div>
 
-          <label class="form-label text-muted fw-bold mb-0">Magnetic Field (B) - μT</label>
-          <div class="d-flex align-items-center">
-            <input type="range" class="form-range" id="sliderB" min="-500" max="500" value="0" oninput="updatePhysics()">
+          <label class="control-label mb-1">Magnetic Field (B) - μT</label>
+          <div class="d-flex align-items-center mb-3">
+            <input type="range" class="form-range" id="sliderB" min="0" max="500" value="0" oninput="updatePhysics()">
             <span class="ms-2 badge bg-info text-dark" id="valB">0</span>
           </div>
-
         </div>
-      </div>
-    </div>
 
-    <div class="col-lg-7 d-flex flex-column align-items-center">
-      <button class="btn btn-dark btn-lg w-75 mb-3 fw-bold shadow-sm" id="btnViewToggle" onclick="toggleView()">
-        <i class="bi bi-camera"></i> SWITCH TO FRONT OSCILLOSCOPE VIEW
-      </button>
-      
-      <div id="canvas-container" class="shadow rounded overflow-hidden border"></div>
-    </div>
-
-    <div class="col-lg-2">
-      <div class="card shadow-sm border-0 bg-light">
-        <div class="card-header bg-dark text-white fw-bold text-center">Live Sensors</div>
-        <div class="card-body text-center">
-          
-          <h6 class="text-muted mb-0">E-Field (V/m)</h6>
-          <h4 class="text-danger fw-bold mb-3" id="readE">0</h4>
-
-          <h6 class="text-muted mb-0">B-Field (μT)</h6>
-          <h4 class="text-info fw-bold mb-3" id="readB">0</h4>
-
-          <h6 class="text-muted mb-0">Deflection (y) cm</h6>
-          <h3 class="text-success fw-bold" id="readY">0.00</h3>
-          
+        <div class="mb-4">
+          <div class="section-header">3. Calculate e/m</div>
+          <div class="row g-2 mb-2">
+            <div class="col-4">
+              <input type="number" id="inpY" class="form-control form-control-sm border-secondary" placeholder="y (cm)">
+            </div>
+            <div class="col-4">
+              <input type="number" id="inpE3" class="form-control form-control-sm border-secondary" placeholder="E (V/m)">
+            </div>
+            <div class="col-4">
+              <input type="number" id="inpB" class="form-control form-control-sm border-secondary" placeholder="B (μT)">
+            </div>
+          </div>
+          <button class="btn btn-success btn-sm w-100 fw-bold mb-2 shadow-sm" onclick="calculateEM()">CALCULATE</button>
+          <div class="text-center fw-bold p-2 bg-light border rounded" id="mathOutput" style="font-size: 0.95rem;color: red;">---</div>
         </div>
-      </div>
-    </div>
 
+      </div>
+
+      <div class="col-lg-9 d-flex flex-column">
+        
+        <button class="btn btn-dark w-100 mb-3 fw-bold shadow-sm" id="btnViewToggle" onclick="toggleView()">
+          <i class="bi bi-camera"></i> SWITCH TO FRONT OSCILLOSCOPE VIEW
+        </button>
+        
+        <div id="canvas-container" class="shadow-sm border"></div>
+
+        <div class="sensor-bar mt-3 p-3 d-flex justify-content-around align-items-center shadow-sm">
+          <div>
+            <span class="control-label text-dark fw-bold me-2">E-Field:</span>
+            <span class="sensor-value text-danger fw-bold fs-6" id="readE">0</span>
+          </div>
+          <div>
+            <span class="control-label text-dark fw-bold me-2">B-Field:</span>
+            <span class="sensor-value text-info fw-bold fs-6" id="readB">0</span>
+          </div>
+          <div>
+            <span class="control-label text-dark fw-bold me-2">Deflection (y):</span>
+            <span class="sensor-value text-success fw-bold fs-6" id="readY">0.00</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
   </div>
 </div>
 

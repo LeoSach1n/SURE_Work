@@ -9,12 +9,12 @@ let viewMode = 'SIDE'; // 'SIDE' or 'FRONT'
 
 // True Physics Constants
 const E_M_RATIO = 1.76e11; 
-let V_X = 1e7; // Dynamic Velocity variable
+let V_X = 1e7; 
 
 // Canvas Geometry & Scale
 const PX_PER_METER = 2000; 
 const CENTER_Y = 300; 
-const GUN_X = 90; 
+const GUN_X = 150; // Shifted right from 90 to 150 to center the apparatus
 
 // Positions in Meters
 const PLATE_START_M = 0.10; 
@@ -27,7 +27,7 @@ const PLATE_END = GUN_X + (PLATE_END_M * PX_PER_METER);
 const SCREEN_X = GUN_X + (SCREEN_M * PX_PER_METER);
 
 function setup() {
-  let canvas = createCanvas(900, 600);
+  let canvas = createCanvas(950, 600);
   canvas.parent('canvas-container');
   updatePhysics();
 }
@@ -41,30 +41,25 @@ function draw() {
   if (viewMode === 'SIDE') {
     
     // 1. Draw Cathode Ray Tube (Glass Funnel)
-    stroke(180); strokeWeight(3); noFill();
+    stroke(0); // Changed to black outline
+    strokeWeight(3); noFill();
     beginShape();
-    vertex(30, CENTER_Y - 40); 
-    vertex(200, CENTER_Y - 40);
-    // Connect perfectly to the tips of the gentler curve
-    vertex(SCREEN_X - 60, CENTER_Y - 230); 
-    vertex(SCREEN_X - 60, CENTER_Y + 230);
-    vertex(200, CENTER_Y + 40); 
-    vertex(30, CENTER_Y + 40);
+    vertex(30, CENTER_Y - 40); vertex(200, CENTER_Y - 40);
+    vertex(SCREEN_X - 60, CENTER_Y - 230); vertex(SCREEN_X - 60, CENTER_Y + 230);
+    vertex(200, CENTER_Y + 40); vertex(30, CENTER_Y + 40);
     endShape(CLOSE);
 
     // 2. Draw CRT Curved Face Profile
     noFill();
-    // Dark Bezel Profile (Thinner, with ROUND caps for smooth edges)
     stroke(50); strokeWeight(8); strokeCap(ROUND);
     arc(SCREEN_X - 60, CENTER_Y, 120, 460, -HALF_PI, HALF_PI);
     
-    // Phosphor Screen Profile (Thinner, glowing slate green)
     stroke(15, 40, 25); strokeWeight(4); strokeCap(ROUND);
     arc(SCREEN_X - 60, CENTER_Y, 120, 445, -HALF_PI, HALF_PI);
 
     // 3. Draw Authentic Electron Gun 
     push();
-    fill(200, 220, 255, 40); stroke(255, 255, 255, 150); strokeWeight(2);
+    fill(10,10,10, 40); stroke(0,0,0, 150); strokeWeight(2);
     rect(10, CENTER_Y - 35, GUN_X - 5, 70, 20); 
     stroke(255, 255, 255, 200); strokeWeight(3);
     line(20, CENTER_Y - 25, GUN_X - 15, CENTER_Y - 25);
@@ -79,9 +74,8 @@ function draw() {
     push(); fill(0, 100, 255); noStroke(); rect(45, CENTER_Y - 15, 6, 30, 2); fill(0, 100, 255); textSize(14); textStyle(BOLD); textAlign(CENTER); text("C (-)", 48, CENTER_Y - 50); pop();
     push(); stroke(220, 50, 50); strokeWeight(4); noFill(); ellipse(GUN_X, CENTER_Y, 10, 45); fill(220, 50, 50); noStroke(); textSize(14); textStyle(BOLD); textAlign(CENTER); text("A (+)", GUN_X, CENTER_Y - 50); pop();
 
-    // Main Gun Label
-    fill(140); textSize(13); textStyle(BOLD); textAlign(CENTER);
-    text("ELECTRON GUN", 50, CENTER_Y + 65);
+    fill(240); textSize(12); textStyle(BOLD); textAlign(CENTER);
+    text("ELECTRON GUN", 80, CENTER_Y + 70);
 
     // 4. Central Axis
     stroke(150); strokeWeight(2); drawingContext.setLineDash([8, 8]);
@@ -129,16 +123,14 @@ function draw() {
     // 9. Measurement Visualization (The 'y' Arrow)
     let finalRawY = getPixelY(SCREEN_X);
     deflectionY_cm = (CENTER_Y - finalRawY) / (PX_PER_METER / 100); 
-
     let displayY = CENTER_Y - ((CENTER_Y - finalRawY) * Math.cos(rad));
-    
-    // Draw a glowing impact spot on the side-profile glass
+
     push();
     drawingContext.shadowBlur = 15; 
     drawingContext.shadowColor = 'cyan';
     fill(150, 255, 255); noStroke();
-    circle(SCREEN_X, displayY, 8); // Bright core
-    fill(255); circle(SCREEN_X, displayY, 4); // White hot center
+    circle(SCREEN_X, displayY, 8); 
+    fill(255); circle(SCREEN_X, displayY, 4); 
     pop();
 
     if (Math.abs(deflectionY_cm) > 0.05) {
@@ -155,7 +147,6 @@ function draw() {
       text(`y = ${Math.abs(deflectionY_cm).toFixed(2)} cm`, SCREEN_X + 35, (CENTER_Y + displayY)/2);
     }
     
-    // Formula Cheat Sheet
     fill(80); noStroke(); textAlign(LEFT, BOTTOM); textStyle(NORMAL); textSize(12);
     let textBaseY = height - 15;
     text("e/m = 2yE / (B²L²)", 20, textBaseY);
@@ -173,15 +164,12 @@ function draw() {
     let cx = width / 2;
     let cy = height / 2;
 
-    // 1. Draw the CRT Glass Bezel
     fill(30); stroke(80); strokeWeight(15);
     circle(cx, cy, 460);
 
-    // 2. Draw Phosphor Screen (Dark Slate Green)
     fill(10, 25, 15); noStroke();
     circle(cx, cy, 445);
 
-    // 3. Draw Grid Rings & Crosshairs
     stroke(0, 100, 50, 150); strokeWeight(2);
     for(let r = 20; r <= 220; r += 20) { 
       noFill(); circle(cx, cy, r*2);
@@ -189,14 +177,12 @@ function draw() {
     line(cx - 220, cy, cx + 220, cy);
     line(cx, cy - 220, cx, cy + 220);
 
-    // 4. Tick Marks
     stroke(0, 150, 75, 200);
     for(let d = -220; d <= 220; d += 20) {
       line(cx + d, cy - 5, cx + d, cy + 5); 
       line(cx - 5, cy + d, cx + 5, cy + d); 
     }
 
-    // --- BEAM IMPACT CALCULATION ---
     let finalRawY = getPixelY(SCREEN_X);
     deflectionY_cm = (CENTER_Y - finalRawY) / (PX_PER_METER / 100); 
 
@@ -207,30 +193,25 @@ function draw() {
     let hitX_px = cx + (hitX_cm * 20);
     let hitY_px = cy - (hitY_cm * 20);
 
-    // 5. Draw the Glowing Beam Spot
     drawingContext.shadowBlur = 25; drawingContext.shadowColor = 'cyan';
     fill(150, 255, 255); noStroke(); circle(hitX_px, hitY_px, 14);
     fill(255); circle(hitX_px, hitY_px, 6);
     drawingContext.shadowBlur = 0; 
 
-    // 6. Heads-Up Display
     fill(0, 255, 0); textSize(14); textAlign(LEFT, TOP); textStyle(BOLD);
-    text("TARGET METRICS", cx - 210, cy - 210);
+    text("TARGET METRICS", cx - 310, cy - 210);
     textStyle(NORMAL);
-    text(`X Offset: ${hitX_cm.toFixed(2)} cm`, cx - 210, cy - 190);
-    text(`Y Offset: ${hitY_cm.toFixed(2)} cm`, cx - 210, cy - 170);
-    text(`Tube Rotation: ${valRotation}°`, cx - 210, cy - 150);
+    text(`X Offset: ${hitX_cm.toFixed(2)} cm`, cx - 310, cy - 190);
+    text(`Y Offset: ${hitY_cm.toFixed(2)} cm`, cx - 310, cy - 170);
+    text(`Tube Rotation: ${valRotation}°`, cx - 310, cy - 150);
   }
 
   // ==========================================
   // SHARED UI ELEMENTS (Updates HTML DOM)
   // ==========================================
-  
-  // Update Slider Badges
   if(document.getElementById('valE')) document.getElementById('valE').innerText = valE;
   if(document.getElementById('valB')) document.getElementById('valB').innerText = valB;
   
-  // Update Large Sensors Panel
   if(document.getElementById('readE')) document.getElementById('readE').innerText = valE;
   if(document.getElementById('readB')) document.getElementById('readB').innerText = valB;
   if(document.getElementById('readY')) document.getElementById('readY').innerText = Math.abs(deflectionY_cm).toFixed(2);
@@ -284,22 +265,25 @@ function setPhase(phase) {
   let sE = document.getElementById('sliderE');
   let sB = document.getElementById('sliderB');
   
-  btn1.classList.replace('btn-primary', 'btn-secondary');
-  btn2.classList.replace('btn-primary', 'btn-secondary');
-  btn3.classList.replace('btn-primary', 'btn-secondary');
+  // Reset all buttons to the "unselected" outline style
+  btn1.className = "btn btn-outline-secondary btn-sm w-100 mb-2 fw-bold";
+  btn2.className = "btn btn-outline-secondary btn-sm w-100 mb-2 fw-bold";
+  btn3.className = "btn btn-outline-secondary btn-sm w-100 fw-bold";
 
+  // Apply the "selected" solid primary style to the active button
   if (phase === 1) {
-    btn1.classList.replace('btn-secondary', 'btn-primary'); 
+    btn1.className = "btn btn-primary btn-sm w-100 mb-2 fw-bold";
     sE.disabled = false; sB.disabled = true; sB.value = 0; 
   } 
   else if (phase === 2) {
-    btn2.classList.replace('btn-secondary', 'btn-primary');
+    btn2.className = "btn btn-primary btn-sm w-100 mb-2 fw-bold";
     sE.disabled = true; sE.value = 0; sB.disabled = false;
   } 
   else if (phase === 3) {
-    btn3.classList.replace('btn-secondary', 'btn-primary');
+    btn3.className = "btn btn-primary btn-sm w-100 fw-bold";
     sE.disabled = false; sB.disabled = false;
   }
+  
   updatePhysics();
 }
 
@@ -323,4 +307,34 @@ function updatePhysics() {
       document.getElementById('valRotation').innerText = valRotation;
     }
   }
+}
+
+// --- EXPERIMENTAL MATH VALIDATOR ---
+function calculateEM() {
+  let y_cm = parseFloat(document.getElementById('inpY').value);
+  let E3 = parseFloat(document.getElementById('inpE3').value);
+  let B_uT = parseFloat(document.getElementById('inpB').value);
+
+  if (isNaN(y_cm) || isNaN(E3) || isNaN(B_uT)) {
+    alert("Please fill out all 3 measurement fields.");
+    return;
+  }
+
+  let y_m = y_cm * 0.01;
+  let B = B_uT * 1e-6;
+  
+  let L = 0.1; 
+  let D = 0.15; 
+
+  let v = E3 / B;
+  let calculatedEM = (y_m * v * v) / (E3 * L * ((L / 2) + D));
+
+  let output = document.getElementById('mathOutput');
+  let exponent = Math.floor(Math.log10(calculatedEM));
+  let base = (calculatedEM / Math.pow(10, exponent)).toFixed(2);
+  
+  let errorPct = (Math.abs(calculatedEM - E_M_RATIO) / E_M_RATIO) * 100;
+  
+  output.innerText = `${base} × 10^${exponent} C/kg   |   Error: ${errorPct.toFixed(2)}%`;
+  output.style.color = (errorPct < 5.0) ? "#28a745" : "#dc3545";
 }
