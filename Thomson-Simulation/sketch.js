@@ -1,20 +1,18 @@
 // --- GLOBAL VARIABLES ---
 let currentPhase = 1;
-let valE = 0; // V/m
-let valB = 0; // microTesla
-let valVoltage = 284; // Accelerating Voltage
-let valRotation = 0; // Tube Rotation (degrees)
+let valE = 0; 
+let valB = 0; 
 let deflectionY_cm = 0;
-let viewMode = 'SIDE'; // 'SIDE' or 'FRONT'
+let viewMode = 'SIDE'; 
 
 // True Physics Constants
 const E_M_RATIO = 1.76e11; 
-let V_X = 1e7; 
+let V_X = 2e7; 
 
 // Canvas Geometry & Scale
 const PX_PER_METER = 2000; 
 const CENTER_Y = 300; 
-const GUN_X = 150; // Shifted right from 90 to 150 to center the apparatus
+const GUN_X = 150; 
 
 // Positions in Meters
 const PLATE_START_M = 0.10; 
@@ -27,7 +25,8 @@ const PLATE_END = GUN_X + (PLATE_END_M * PX_PER_METER);
 const SCREEN_X = GUN_X + (SCREEN_M * PX_PER_METER);
 
 function setup() {
-  let canvas = createCanvas(950, 600);
+  // WIDENED CANVAS TO FIT THE NEW HTML CONTAINER
+  let canvas = createCanvas(1050, 600);
   canvas.parent('canvas-container');
   updatePhysics();
 }
@@ -40,49 +39,71 @@ function draw() {
   // ==========================================
   if (viewMode === 'SIDE') {
     
-    // 1. Draw Cathode Ray Tube (Glass Funnel)
-    stroke(0); // Changed to black outline
-    strokeWeight(3); noFill();
+    // 1. Draw Cathode Ray Tube 
+    stroke(0); strokeWeight(3); noFill();
     beginShape();
-    vertex(30, CENTER_Y - 40); vertex(200, CENTER_Y - 40);
+    vertex(10, CENTER_Y - 40); vertex(200, CENTER_Y - 40);
     vertex(SCREEN_X - 60, CENTER_Y - 230); vertex(SCREEN_X - 60, CENTER_Y + 230);
-    vertex(200, CENTER_Y + 40); vertex(30, CENTER_Y + 40);
+    vertex(200, CENTER_Y + 40); vertex(10, CENTER_Y + 40);
     endShape(CLOSE);
 
-    // 2. Draw CRT Curved Face Profile
     noFill();
     stroke(50); strokeWeight(8); strokeCap(ROUND);
     arc(SCREEN_X - 60, CENTER_Y, 120, 460, -HALF_PI, HALF_PI);
-    
     stroke(15, 40, 25); strokeWeight(4); strokeCap(ROUND);
     arc(SCREEN_X - 60, CENTER_Y, 120, 445, -HALF_PI, HALF_PI);
 
-    // 3. Draw Authentic Electron Gun 
+    // 2. Draw Electron Gun 
     push();
     fill(10,10,10, 40); stroke(0,0,0, 150); strokeWeight(2);
-    rect(10, CENTER_Y - 35, GUN_X - 5, 70, 20); 
+    rect(15, CENTER_Y - 35, GUN_X - 10, 70, 20); 
     stroke(255, 255, 255, 200); strokeWeight(3);
-    line(20, CENTER_Y - 25, GUN_X - 15, CENTER_Y - 25);
+    line(25, CENTER_Y - 25, GUN_X - 15, CENTER_Y - 25);
     pop();
 
     push();
     stroke(255, 150, 0); strokeWeight(2); noFill();
     drawingContext.shadowBlur = 10; drawingContext.shadowColor = 'orange';
-    beginShape(); vertex(20, CENTER_Y - 15); vertex(30, CENTER_Y - 5); vertex(20, CENTER_Y + 5); vertex(30, CENTER_Y + 15); endShape();
+    beginShape(); vertex(25, CENTER_Y - 15); vertex(35, CENTER_Y - 5); vertex(25, CENTER_Y + 5); vertex(35, CENTER_Y + 15); endShape();
     pop();
 
-    push(); fill(0, 100, 255); noStroke(); rect(45, CENTER_Y - 15, 6, 30, 2); fill(0, 100, 255); textSize(14); textStyle(BOLD); textAlign(CENTER); text("C (-)", 48, CENTER_Y - 50); pop();
+    push(); fill(0, 100, 255); noStroke(); rect(48, CENTER_Y - 15, 6, 30, 2); fill(0, 100, 255); textSize(14); textStyle(BOLD); textAlign(CENTER); text("C (-)", 51, CENTER_Y - 50); pop();
     push(); stroke(220, 50, 50); strokeWeight(4); noFill(); ellipse(GUN_X, CENTER_Y, 10, 45); fill(220, 50, 50); noStroke(); textSize(14); textStyle(BOLD); textAlign(CENTER); text("A (+)", GUN_X, CENTER_Y - 50); pop();
 
-    fill(240); textSize(12); textStyle(BOLD); textAlign(CENTER);
-    text("ELECTRON GUN", 80, CENTER_Y + 70);
+    fill(255); textSize(15); textStyle(BOLD); textAlign(CENTER);
+    text("ELECTRON GUN", 95, CENTER_Y - 85);
 
-    // 4. Central Axis
+    // HIGH VOLTAGE CIRCUIT 
+    push();
+    stroke(80); strokeWeight(2); noFill();
+    
+    line(51, CENTER_Y + 15, 51, CENTER_Y + 120); 
+    line(51, CENTER_Y + 120, 85, CENTER_Y + 120);
+    
+    line(GUN_X, CENTER_Y + 22, GUN_X, CENTER_Y + 120);
+    line(GUN_X, CENTER_Y + 120, 115, CENTER_Y + 120);
+
+    stroke(0); strokeCap(SQUARE);
+    strokeWeight(4); line(85, CENTER_Y + 110, 85, CENTER_Y + 130); 
+    strokeWeight(2); line(95, CENTER_Y + 105, 95, CENTER_Y + 135); 
+    strokeWeight(4); line(105, CENTER_Y + 110, 105, CENTER_Y + 130); 
+    strokeWeight(2); line(115, CENTER_Y + 105, 115, CENTER_Y + 135); 
+    
+    strokeWeight(2);
+    line(85, CENTER_Y + 120, 115, CENTER_Y + 120);
+
+    fill(0, 100, 255); noStroke(); textSize(18); textStyle(BOLD); textAlign(CENTER);
+    text("-", 72, CENTER_Y + 135);
+    fill(220, 50, 50);
+    text("+", 128, CENTER_Y + 135);
+    pop();
+
+    // 3. Central Axis
     stroke(150); strokeWeight(2); drawingContext.setLineDash([8, 8]);
     line(GUN_X, CENTER_Y, SCREEN_X, CENTER_Y);
     drawingContext.setLineDash([]);
 
-    // 5. Draw Magnetic Coils
+    // 4. Draw Magnetic Coils
     if (currentPhase == 2 || currentPhase == 3) {
       let alpha = (currentPhase == 2) ? 250 : 150;
       stroke(0, 86, 179, alpha); strokeWeight(5); drawingContext.setLineDash([15, 15]);
@@ -92,73 +113,56 @@ function draw() {
       text("B-Field Coils", (PLATE_START + PLATE_END)/2, CENTER_Y + 90);
     }
 
-    // 6. Draw Electric Plates
+    // 5. Draw Electric Plates
     let plateAlpha = (currentPhase==2)?50:255;
     fill(217, 83, 79,plateAlpha); rect(PLATE_START, CENTER_Y - 50, PLATE_END - PLATE_START, 8, 3);
     fill(50, 50, 50,plateAlpha); rect(PLATE_START, CENTER_Y + 42, PLATE_END - PLATE_START, 8, 3);
 
-    // --- BEAM RENDERING MATH ---
-    let rad = radians(valRotation); 
-    
-    // 7. Draw Continuous Beam
+    // 6. Draw Continuous Beam
     noFill(); stroke(0, 255, 255, 100); strokeWeight(4);
     beginShape();
     for (let px = GUN_X; px <= SCREEN_X; px += 5) {
-      let rawY = getPixelY(px);
-      let rotatedY = CENTER_Y - ((CENTER_Y - rawY) * Math.cos(rad));
-      vertex(px, rotatedY);
+      vertex(px, getPixelY(px));
     }
     endShape();
 
-    // 8. Dynamic Animation (Moving Electrons)
+    // 7. Dynamic Animation 
     let speed = 8; fill(255); noStroke();
     for (let i = 0; i < 12; i++) {
       let px = GUN_X + ((frameCount * speed + i * 60) % (SCREEN_X - GUN_X));
       let rawY = getPixelY(px);
-      let rotatedY = CENTER_Y - ((CENTER_Y - rawY) * Math.cos(rad));
       drawingContext.shadowBlur = 10; drawingContext.shadowColor = 'cyan';
-      circle(px, rotatedY, 6); drawingContext.shadowBlur = 0; 
+      circle(px, rawY, 6); drawingContext.shadowBlur = 0; 
     }
 
-    // 9. Measurement Visualization (The 'y' Arrow)
+    // 8. Measurement Visualization
     let finalRawY = getPixelY(SCREEN_X);
     deflectionY_cm = (CENTER_Y - finalRawY) / (PX_PER_METER / 100); 
-    let displayY = CENTER_Y - ((CENTER_Y - finalRawY) * Math.cos(rad));
 
     push();
-    drawingContext.shadowBlur = 15; 
-    drawingContext.shadowColor = 'cyan';
+    drawingContext.shadowBlur = 15; drawingContext.shadowColor = 'cyan';
     fill(150, 255, 255); noStroke();
-    circle(SCREEN_X, displayY, 8); 
-    fill(255); circle(SCREEN_X, displayY, 4); 
+    circle(SCREEN_X, finalRawY, 8); 
+    fill(255); circle(SCREEN_X, finalRawY, 4); 
     pop();
 
     if (Math.abs(deflectionY_cm) > 0.05) {
       stroke(200, 50, 50); strokeWeight(2);
-      line(SCREEN_X + 25, CENTER_Y, SCREEN_X + 25, displayY);
+      line(SCREEN_X + 25, CENTER_Y, SCREEN_X + 25, finalRawY);
       
       push(); fill(200, 50, 50); noStroke();
-      let dir = (displayY < CENTER_Y) ? -1 : 1;
-      triangle(SCREEN_X + 25, displayY, SCREEN_X + 20, displayY - dir*6, SCREEN_X + 30, displayY - dir*6);
+      let dir = (finalRawY < CENTER_Y) ? -1 : 1;
+      triangle(SCREEN_X + 25, finalRawY, SCREEN_X + 20, finalRawY - dir*6, SCREEN_X + 30, finalRawY - dir*6);
       triangle(SCREEN_X + 25, CENTER_Y, SCREEN_X + 20, CENTER_Y + dir*6, SCREEN_X + 30, CENTER_Y + dir*6);
       pop();
 
       fill(200, 50, 50); noStroke(); textAlign(LEFT, CENTER); textSize(14);
-      text(`y = ${Math.abs(deflectionY_cm).toFixed(2)} cm`, SCREEN_X + 35, (CENTER_Y + displayY)/2);
+      text(`y = ${Math.abs(deflectionY_cm).toFixed(2)} cm`, SCREEN_X + 35, (CENTER_Y + finalRawY)/2);
     }
-    
-    fill(80); noStroke(); textAlign(LEFT, BOTTOM); textStyle(NORMAL); textSize(12);
-    let textBaseY = height - 15;
-    text("e/m = 2yE / (B²L²)", 20, textBaseY);
-    text("v = E / B", 20, textBaseY - 20);
-    text("Fm = evB  (Fleming's Left-Hand Rule)", 20, textBaseY - 40);
-    text("Fe = eE", 20, textBaseY - 60);
-    textStyle(BOLD); fill(50);
-    text("Governing Formulas:", 20, textBaseY - 80);
   } 
 
   // ==========================================
-  // CAMERA: FRONT VIEW (OSCILLOSCOPE)
+  // CAMERA: FRONT VIEW 
   // ==========================================
   else if (viewMode === 'FRONT') {
     let cx = width / 2;
@@ -170,28 +174,25 @@ function draw() {
     fill(10, 25, 15); noStroke();
     circle(cx, cy, 445);
 
+    // Grid Rings & Strict Vertical Axis
     stroke(0, 100, 50, 150); strokeWeight(2);
     for(let r = 20; r <= 220; r += 20) { 
       noFill(); circle(cx, cy, r*2);
     }
-    line(cx - 220, cy, cx + 220, cy);
     line(cx, cy - 220, cx, cy + 220);
 
+    // Tick Marks (Y-axis only)
     stroke(0, 150, 75, 200);
     for(let d = -220; d <= 220; d += 20) {
-      line(cx + d, cy - 5, cx + d, cy + 5); 
       line(cx - 5, cy + d, cx + 5, cy + d); 
     }
 
     let finalRawY = getPixelY(SCREEN_X);
     deflectionY_cm = (CENTER_Y - finalRawY) / (PX_PER_METER / 100); 
 
-    let rad = radians(valRotation);
-    let hitX_cm = deflectionY_cm * Math.sin(rad);
-    let hitY_cm = deflectionY_cm * Math.cos(rad);
-
-    let hitX_px = cx + (hitX_cm * 20);
-    let hitY_px = cy - (hitY_cm * 20);
+    // Pure 1D deflection
+    let hitX_px = cx;
+    let hitY_px = finalRawY - (CENTER_Y - cy); 
 
     drawingContext.shadowBlur = 25; drawingContext.shadowColor = 'cyan';
     fill(150, 255, 255); noStroke(); circle(hitX_px, hitY_px, 14);
@@ -201,20 +202,13 @@ function draw() {
     fill(0, 255, 0); textSize(14); textAlign(LEFT, TOP); textStyle(BOLD);
     text("TARGET METRICS", cx - 310, cy - 210);
     textStyle(NORMAL);
-    text(`X Offset: ${hitX_cm.toFixed(2)} cm`, cx - 310, cy - 190);
-    text(`Y Offset: ${hitY_cm.toFixed(2)} cm`, cx - 310, cy - 170);
-    text(`Tube Rotation: ${valRotation}°`, cx - 310, cy - 150);
+    text(`Deflection (y): ${deflectionY_cm.toFixed(2)} cm`, cx - 310, cy - 190);
   }
 
-  // ==========================================
-  // SHARED UI ELEMENTS (Updates HTML DOM)
-  // ==========================================
-  if(document.getElementById('valE')) document.getElementById('valE').innerText = valE;
-  if(document.getElementById('valB')) document.getElementById('valB').innerText = valB;
-  
-  if(document.getElementById('readE')) document.getElementById('readE').innerText = valE;
-  if(document.getElementById('readB')) document.getElementById('readB').innerText = valB;
-  if(document.getElementById('readY')) document.getElementById('readY').innerText = Math.abs(deflectionY_cm).toFixed(2);
+  // SHARED DOM UPDATES (Fixes the flashing race condition)
+  if(document.getElementById('readY')) {
+    document.getElementById('readY').innerText = Math.abs(deflectionY_cm).toFixed(2) + ' cm';
+  }
 }
 
 // --- PHYSICS KINEMATICS ENGINE ---
@@ -252,7 +246,7 @@ function toggleView() {
     document.getElementById('btnViewToggle').innerHTML = '<i class="bi bi-camera-fill"></i> SWITCH TO SIDE VIEW';
   } else {
     viewMode = 'SIDE';
-    document.getElementById('btnViewToggle').innerHTML = '<i class="bi bi-camera"></i> SWITCH TO FRONT OSCILLOSCOPE VIEW';
+    document.getElementById('btnViewToggle').innerHTML = '<i class="bi bi-camera"></i> SWITCH TO FRONT VIEW';
   }
 }
 
@@ -265,12 +259,10 @@ function setPhase(phase) {
   let sE = document.getElementById('sliderE');
   let sB = document.getElementById('sliderB');
   
-  // Reset all buttons to the "unselected" outline style
-  btn1.className = "btn btn-outline-secondary btn-sm w-100 mb-2 fw-bold";
-  btn2.className = "btn btn-outline-secondary btn-sm w-100 mb-2 fw-bold";
-  btn3.className = "btn btn-outline-secondary btn-sm w-100 fw-bold";
+  btn1.className = "btn btn-secondary btn-sm w-100 mb-2 fw-bold";
+  btn2.className = "btn btn-secondary btn-sm w-100 mb-2 fw-bold";
+  btn3.className = "btn btn-secondary btn-sm w-100 fw-bold";
 
-  // Apply the "selected" solid primary style to the active button
   if (phase === 1) {
     btn1.className = "btn btn-primary btn-sm w-100 mb-2 fw-bold";
     sE.disabled = false; sB.disabled = true; sB.value = 0; 
@@ -288,25 +280,15 @@ function setPhase(phase) {
 }
 
 function updatePhysics() {
-  valE = parseInt(document.getElementById('sliderE').value);
-  valB = parseInt(document.getElementById('sliderB').value);
+  valE = parseFloat(document.getElementById('sliderE').value);
+  valB = parseFloat(document.getElementById('sliderB').value);
   
-  let sliderV = document.getElementById('sliderVoltage');
-  if (sliderV) {
-    valVoltage = parseInt(sliderV.value);
-    if(document.getElementById('valVoltage')) {
-      document.getElementById('valVoltage').innerText = valVoltage;
-    }
-    V_X = Math.sqrt(2 * E_M_RATIO * valVoltage);
-  }
+  let rawV = parseFloat(document.getElementById('sliderVelocity').value);
+  V_X = rawV * 1e7; 
 
-  let sliderRot = document.getElementById('sliderRotation');
-  if (sliderRot) {
-    valRotation = parseInt(sliderRot.value);
-    if(document.getElementById('valRotation')) {
-      document.getElementById('valRotation').innerText = valRotation;
-    }
-  }
+  if(document.getElementById('readV')) document.getElementById('readV').innerText = rawV.toFixed(1) + 'e7 m/s';
+  if(document.getElementById('readE')) document.getElementById('readE').innerText = valE + ' V/m';
+  if(document.getElementById('readB')) document.getElementById('readB').innerText = valB + ' µT';
 }
 
 // --- EXPERIMENTAL MATH VALIDATOR ---
