@@ -11,14 +11,14 @@ Rather than a pre-animated video, this simulation features a deterministic, real
 * **Auto-Locking Ledger:** Eliminates human stopwatch error by automatically detecting when a droplet reaches true terminal velocity (zero acceleration) and locking the metric into the data ledger.
 * **Mathematical Derivation:** Features a built-in textbook-style derivation using MathJax to bridge the gap between visual phenomena and the algebraic proof.
 
-<img width="1627" height="955" alt="image" src="https://github.com/user-attachments/assets/62ea82c4-10e7-4902-b8a7-3fc63f4a06ae" />
+<img width="1627" height="947" alt="image" src="https://github.com/user-attachments/assets/7c6ade6c-57ec-4e92-bfd2-66239d0e4d86" />
+
+<img width="1627" height="956" alt="image" src="https://github.com/user-attachments/assets/1e9f72e6-ee3b-4993-ac55-65d2fce0f538" />
+
+<img width="1637" height="598" alt="image" src="https://github.com/user-attachments/assets/404ffd93-4d2d-4734-aa1b-ba29d6cfc6e7" />
 
 
-<img width="1643" height="947" alt="image" src="https://github.com/user-attachments/assets/6a4cf8a7-dd1d-46ef-bd43-e7fbd70f9a96" />
 
-
-
-<img width="1637" height="586" alt="image" src="https://github.com/user-attachments/assets/363509a0-c26d-40a2-a7e5-c5a00031d8b8" />
 
 
 
