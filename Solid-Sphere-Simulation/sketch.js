@@ -3,25 +3,39 @@ let SCREEN_CENTER;
 let projectiles = [];
 let hitMarks = []; 
 
+let currentTargetShape = 'sphere'; 
+
 // Data Tracking Variables
 let statFired = 0;
 let statHits = 0;
 let statEscaped = 0;
 
-const BOX_Y = 300; 
-const TARGET_RADIUS = 60; // Hardcoded fixed radius for the central sphere
+const BASE_BOX_Y = 300; 
+const TARGET_RADIUS = 60; 
+
+// Triangle Geometry Cache
+let triV1, triV2, triV3, triEdges;
 
 function setup() {
   let canvas = createCanvas(800, 600);
   canvas.parent('canvas-container'); 
   
   SCREEN_CENTER = createVector(500, 300);
+
+  // Pre-calculate triangle vertices (Equilateral pointing UP)
+  let R = TARGET_RADIUS;
+  let cos30 = sqrt(3) / 2;
+  let sin30 = 0.5;
+  triV1 = createVector(SCREEN_CENTER.x, SCREEN_CENTER.y - R); // Top
+  triV2 = createVector(SCREEN_CENTER.x - R * cos30, SCREEN_CENTER.y + R * sin30); // Bottom Left
+  triV3 = createVector(SCREEN_CENTER.x + R * cos30, SCREEN_CENTER.y + R * sin30); // Bottom Right
+  triEdges = [ [triV1, triV2], [triV2, triV3], [triV3, triV1] ];
 }
 
 function draw() {
   background(248, 249, 250);
 
-  // 1. Draw the Detector Screen (Fixed Gap)
+  // 1. Draw the Detector Screen
   let currentRadius = document.getElementById('radiusSlider').value;
   let gapCenterRad = PI; 
   let gapHalfRad = radians(12); 
@@ -37,23 +51,38 @@ function draw() {
   drawingContext.setLineDash([]); 
   pop();
 
-  // 2. Draw the Target Solid Sphere (with 3D Radial Gradient)
-  push();
-  let gradient = drawingContext.createRadialGradient(
-    SCREEN_CENTER.x - 20, SCREEN_CENTER.y - 20, 5, 
-    SCREEN_CENTER.x, SCREEN_CENTER.y, TARGET_RADIUS
-  );
-  gradient.addColorStop(0, '#8ab4f8'); // Highlight
-  gradient.addColorStop(1, '#0d47a1'); // Deep shadow
+  // 2. Draw the Target Object (If not hidden)
+  let hideTarget = document.getElementById('hideTargetToggle').checked;
   
-  // Force p5 out of any inherited noFill() states before applying the raw canvas gradient
-  fill(255); 
-  drawingContext.fillStyle = gradient;
-  drawingContext.shadowBlur = 15;
-  drawingContext.shadowColor = 'rgba(0,0,0,0.2)';
-  noStroke();
-  circle(SCREEN_CENTER.x, SCREEN_CENTER.y, TARGET_RADIUS * 2); 
-  pop();
+  if (!hideTarget) {
+    push();
+    drawingContext.shadowBlur = 15;
+    drawingContext.shadowColor = 'rgba(0,0,0,0.3)';
+    fill('#4a90e2'); // Steel blue
+    stroke('#0d47a1');
+    strokeWeight(2);
+
+    if (currentTargetShape === 'sphere') {
+      let gradient = drawingContext.createRadialGradient(
+        SCREEN_CENTER.x - 20, SCREEN_CENTER.y - 20, 5, 
+        SCREEN_CENTER.x, SCREEN_CENTER.y, TARGET_RADIUS
+      );
+      gradient.addColorStop(0, '#8ab4f8'); 
+      gradient.addColorStop(1, '#0d47a1'); 
+      drawingContext.fillStyle = gradient;
+      noStroke();
+      circle(SCREEN_CENTER.x, SCREEN_CENTER.y, TARGET_RADIUS * 2); 
+    } 
+    else if (currentTargetShape === 'square') {
+      rectMode(CENTER);
+      rect(SCREEN_CENTER.x, SCREEN_CENTER.y, TARGET_RADIUS * 2, TARGET_RADIUS * 2, 8);
+    } 
+    else if (currentTargetShape === 'triangle') {
+      strokeJoin(ROUND);
+      triangle(triV1.x, triV1.y, triV2.x, triV2.y, triV3.x, triV3.y);
+    }
+    pop();
+  }
 
   // 3. Draw the Screen Hits
   for (let mark of hitMarks) {
@@ -62,25 +91,27 @@ function draw() {
     circle(mark.x, mark.y, 8);
   }
 
-  // 4. Draw the Firing Box
+  // 4. Draw the Firing Box at the custom Y-Offset
+  let yOffset = parseInt(document.getElementById('yOffsetSlider').value);
+  let currentBoxY = BASE_BOX_Y + yOffset;
+
   push();
   rectMode(CENTER);
   fill(160, 160, 165); 
   stroke(100);
   strokeWeight(2);
-  rect(30, BOX_Y, 40, 80, 5); 
+  rect(30, currentBoxY, 40, 80, 5); 
   
   fill(30); 
   noStroke();
-  rect(45, BOX_Y, 15, 8); 
+  rect(45, currentBoxY, 15, 8); 
   pop();
 
   // 5. Process Projectiles
   for (let i = projectiles.length - 1; i >= 0; i--) {
     let p = projectiles[i];
     
-    // Check for physical elastic collision
-    p.checkCollision(SCREEN_CENTER, TARGET_RADIUS);
+    p.checkCollision();
     p.update(SCREEN_CENTER); 
     p.show();
 
@@ -108,10 +139,19 @@ function draw() {
 }
 
 // --- HTML TRIGGER FUNCTIONS ---
+function setTargetShape(shape, btnElement) {
+  currentTargetShape = shape;
+  let buttons = document.getElementsByClassName('element-tile');
+  for (let b of buttons) { b.classList.remove('active'); }
+  btnElement.classList.add('active');
+}
+
 function fireNewProjectile() {
   let velocity = document.getElementById('velocitySlider').value;
-  // Fire single ball with a randomized Y offset of -30 to 30 pixels
-  projectiles.push(new Projectile(45, BOX_Y + random(-30, 30), parseFloat(velocity)));
+  let yOffset = parseInt(document.getElementById('yOffsetSlider').value);
+  
+  // Fires exactly from the chosen gun position (No randomization)
+  projectiles.push(new Projectile(45, BASE_BOX_Y + yOffset, parseFloat(velocity)));
   
   statFired++;
   document.getElementById('statFired').innerText = statFired;
@@ -137,42 +177,79 @@ class Projectile {
     this.hasBounced = false; 
   }
 
-  // Pure Kinematic Elastic Collision
-  checkCollision(targetPos, targetRadius) {
-    if (this.hasBounced) return; // Only allow one bounce to prevent clipping
+  checkCollision() {
+    if (this.hasBounced) return; 
 
-    let rTotal = targetRadius + this.radius;
-    let distance = p5.Vector.dist(this.pos, targetPos);
-    
-    // If overlapping
-    if (distance <= rTotal) {
-      // 1. Find the normal vector (perpendicular to surface at impact point)
-      let n = p5.Vector.sub(this.pos, targetPos).normalize();
-      
-      // 2. Calculate dot product of velocity and normal
-      let dot = this.vel.dot(n);
-      
-      // 3. Reflect the velocity vector across the normal
-      if (dot < 0) { 
-        let reflection = p5.Vector.mult(n, 2 * dot);
-        this.vel.sub(reflection);
-        this.hasBounced = true; 
-        
-        // 4. Resolve overlap (push projectile out so it doesn't clip into the sphere)
-        let overlap = rTotal - distance;
-        this.pos.add(p5.Vector.mult(n, overlap));
+    if (currentTargetShape === 'sphere') {
+      let rTotal = TARGET_RADIUS + this.radius;
+      let d = p5.Vector.dist(this.pos, SCREEN_CENTER);
+      if (d <= rTotal) {
+        let n = p5.Vector.sub(this.pos, SCREEN_CENTER).normalize();
+        this.executeReflection(n, rTotal - d);
       }
+    } 
+    else if (currentTargetShape === 'square') {
+      // Axis-Aligned Bounding Box Collision
+      let cx = constrain(this.pos.x, SCREEN_CENTER.x - TARGET_RADIUS, SCREEN_CENTER.x + TARGET_RADIUS);
+      let cy = constrain(this.pos.y, SCREEN_CENTER.y - TARGET_RADIUS, SCREEN_CENTER.y + TARGET_RADIUS);
+      let closest = createVector(cx, cy);
+      let d = p5.Vector.dist(this.pos, closest);
+      
+      if (d <= this.radius) {
+        let n;
+        if (d === 0) n = createVector(-1, 0); // Fallback if deep inside
+        else n = p5.Vector.sub(this.pos, closest).normalize();
+        
+        this.executeReflection(n, this.radius - d);
+      }
+    } 
+    else if (currentTargetShape === 'triangle') {
+      // Point-to-Line Segment Collision across all 3 edges
+      let minDist = Infinity;
+      let bestNormal = null;
+      
+      for(let edge of triEdges) {
+        let A = edge[0];
+        let B = edge[1];
+        let AB = p5.Vector.sub(B, A);
+        let AP = p5.Vector.sub(this.pos, A);
+        
+        // Find closest point on the segment
+        let t = constrain(AP.dot(AB) / AB.magSq(), 0, 1);
+        let closest = p5.Vector.add(A, p5.Vector.mult(AB, t));
+        let d = p5.Vector.dist(this.pos, closest);
+        
+        if (d < minDist) {
+          minDist = d;
+          if (d > 0) bestNormal = p5.Vector.sub(this.pos, closest).normalize();
+          else bestNormal = createVector(-1, 0);
+        }
+      }
+      
+      if (minDist <= this.radius) {
+        this.executeReflection(bestNormal, this.radius - minDist);
+      }
+    }
+  }
+
+  executeReflection(normalVector, overlap) {
+    let dot = this.vel.dot(normalVector);
+    if (dot < 0) { 
+      let reflection = p5.Vector.mult(normalVector, 2 * dot);
+      this.vel.sub(reflection);
+      this.hasBounced = true; 
+      
+      // Resolve overlap so it physically stops at the boundary
+      this.pos.add(p5.Vector.mult(normalVector, overlap));
     }
   }
 
   update(centerPos) {
     this.pos.add(this.vel); 
 
-    // Store trail history
     this.history.push(createVector(this.pos.x, this.pos.y));
     if (this.history.length > 50) this.history.splice(0, 1);
 
-    // Detector collision logic
     let currentRadius = document.getElementById('radiusSlider').value;
     let distToCenter = p5.Vector.dist(this.pos, centerPos); 
     
@@ -188,26 +265,19 @@ class Projectile {
 
     if (this.state === 'OUTSIDE') {
       if (distToCenter < currentRadius) {
-        if (isInGap) {
-          this.state = 'INSIDE'; 
-        } else {
-          this.state = 'HIT'; 
-        }
+        if (isInGap) this.state = 'INSIDE'; 
+        else this.state = 'HIT'; 
       }
     } 
     else if (this.state === 'INSIDE') {
       if (distToCenter >= currentRadius) {
-        if (isInGap) {
-          this.state = 'ESCAPED'; 
-        } else {
-          this.state = 'HIT'; 
-        }
+        if (isInGap) this.state = 'ESCAPED'; 
+        else this.state = 'HIT'; 
       }
     }
   }
 
   show() {
-    // Wrapped in push/pop to prevent state leaking!
     push();
     noFill();
     stroke(100, 150, 200, 150);
@@ -217,11 +287,10 @@ class Projectile {
     endShape();
     pop();
 
-    // Draw the 3D-styled solid ball
     push();
     drawingContext.shadowBlur = 4;
     drawingContext.shadowColor = 'rgba(0,0,0,0.4)';
-    fill(255, 87, 34); // Vibrant orange
+    fill(255, 87, 34); 
     stroke(230, 74, 25);
     strokeWeight(1);
     circle(this.pos.x, this.pos.y, this.radius * 2);

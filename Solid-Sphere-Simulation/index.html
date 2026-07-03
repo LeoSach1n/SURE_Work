@@ -3,30 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solid Sphere Scattering Simulator</title>
+    <title>Geometric Scattering Simulator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="dashboard">
         <div class="control-panel">
-            <h2>Kinematic Scattering</h2>
+            <h2>Scattering Lab</h2>
             
             <div class="panel-section">
                 <h3>1. Apparatus Setup</h3>
                 
-                <label>Detector Radius</label>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <input type="range" id="radiusSlider" min="150" max="280" value="220" style="flex-grow: 1; cursor: pointer;">
+                <label>Target Object Shape</label>
+                <div class="periodic-table" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <button class="element-tile active" onclick="setTargetShape('sphere', this)">
+                        <span class="symbol" style="font-size: 16px;">⚫</span>
+                        <span class="atomic-num" style="text-align: center; margin-top: 5px;">Sphere</span>
+                    </button>
+                    <button class="element-tile" onclick="setTargetShape('square', this)">
+                        <span class="symbol" style="font-size: 16px;">⬛</span>
+                        <span class="atomic-num" style="text-align: center; margin-top: 5px;">Square</span>
+                    </button>
+                    <button class="element-tile" onclick="setTargetShape('triangle', this)">
+                        <span class="symbol" style="font-size: 16px;">▲</span>
+                        <span class="atomic-num" style="text-align: center; margin-top: 5px;">Triangle</span>
+                    </button>
                 </div>
+
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #dc3545; font-weight: bold; margin-top:15px; padding: 5px; background: #ffeeba; border-radius: 5px; border: 1px solid #ffdf7e;">
+                    <input type="checkbox" id="hideTargetToggle" style="width: 18px; height: 18px;"> 
+                    Hide Target Object
+                </label>
+
+                <label style="margin-top: 15px;">Detector Radius</label>
+                <input type="range" id="radiusSlider" min="150" max="280" value="220" style="cursor: pointer;">
             </div>
 
             <div class="panel-section">
                 <h3>2. Projectile Controls</h3>
-                <label>Firing Velocity</label>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <input type="range" id="velocitySlider" min="2" max="20" value="10" style="flex-grow: 1; cursor: pointer;">
-                </div>
+                
+                <label>Firing Position (Aim Y-Offset)</label>
+                <input type="range" id="yOffsetSlider" min="-80" max="80" value="0" style="cursor: pointer;">
+
+                <label style="margin-top: 10px;">Firing Velocity</label>
+                <input type="range" id="velocitySlider" min="2" max="20" value="10" style="cursor: pointer;">
                 
                 <button id="fireBtn" class="action-btn" onclick="fireNewProjectile()" style="margin-top: 15px; padding: 12px; font-size: 15px;">
                     🎯 FIRE PROJECTILE
