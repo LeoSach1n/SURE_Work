@@ -8,14 +8,12 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   
-  <!-- MathJax for beautiful LaTeX equation rendering -->
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
   
   <style>
     body { background-color: #e9ecef; padding-bottom: 50px; }
-    #canvas-container canvas { display: block; margin: 0 auto; border-radius: 8px; }
+    #canvas-container canvas { display: block; margin: 0; border-radius: 8px; cursor: crosshair; }
     
     .app-container { background-color: #ffffff; border-radius: 12px; }
     
@@ -29,12 +27,7 @@
       text-transform: uppercase;
     }
     
-    .control-label { 
-      font-size: 0.85rem; 
-      font-weight: 600; 
-      color: #6c757d; 
-    }
-
+    .control-label { font-size: 0.85rem; font-weight: 600; color: #6c757d; }
     .sensor-bar { background-color: #e2e3e5; border-radius: 8px; border-left: 6px solid #0d6efd; }
     
     .readout-box {
@@ -50,59 +43,57 @@
     }
     .locked-value { color: #198754; font-weight: bold; border-color: #198754; background-color: #d1e7dd;}
     
-    /* Styles for the Math Panel */
     .math-panel { background-color: #fdfdfe; border-left: 6px solid #6c757d; }
     .math-box { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; height: 100%; }
     .math-title { font-size: 0.95rem; font-weight: bold; color: #0d6efd; margin-bottom: 15px; border-bottom: 1px solid #dee2e6; padding-bottom: 5px; }
+
+    .instruction-box {
+      background-color: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 10px;
+      font-size: 0.85rem;
+      color: #856404;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
   </style>
 </head>
 <body>
 
 <div class="container-fluid mt-4" style="max-width: 1450px;">
   
-  <!-- MAIN SIMULATION CONTAINER -->
   <div class="app-container shadow-lg p-4 border border-light mb-4">
-    
     <h4 class="text-primary fw-bold mb-4">Millikan Oil Drop Experiment</h4>
 
     <div class="row">
-      
       <!-- LEFT COLUMN -->
       <div class="col-lg-3 pe-lg-4">
         
-        <!-- 1. State Controls -->
-        <div class="mb-4">
-          <div class="section-header">1. Experiment Phase</div>
-          <button class="btn btn-primary btn-sm w-100 mb-2 fw-bold" id="btnPhase1" onclick="setPhase(1)">1. Voltage OFF (Fall)</button>
-          <button class="btn btn-secondary btn-sm w-100 mb-2 fw-bold" id="btnPhase2" onclick="setPhase(2)">2. Voltage ON (Rise)</button>
-          
-          <button class="btn btn-dark btn-sm w-100 mt-3 fw-bold shadow-sm" onclick="spawnDroplet()">
-            <i class="bi bi-moisture"></i> SPRAY NEW DROPLET
-          </button>
+        <div class="instruction-box">
+          <strong><i class="bi bi-info-circle"></i> Instructions:</strong><br>
+          1. Click the Atomizer to spray a fresh batch of droplets.<br>
+          2. A random droplet will be automatically targeted.<br>
+          3. Use the voltage slider to balance the forces.
         </div>
 
-        <!-- 2. Apparatus Controls -->
         <div class="mb-4">
-          <div class="section-header">2. Apparatus Controls</div>
-          
+          <div class="section-header">1. Apparatus Controls</div>
           <label class="control-label mb-1">Plate Voltage (V)</label>
           <div class="d-flex align-items-center mb-3">
             <i class="bi bi-dash-circle fs-5 text-primary"></i>
-            <input type="range" class="form-range mx-2" id="sliderV" min="0" max="50000" step="10" value="0" oninput="updatePhysics()" disabled>
+            <input type="range" class="form-range mx-2" id="sliderV" min="0" max="35000" step="10" value="0" oninput="updatePhysics()">
             <i class="bi bi-plus-circle fs-5 text-primary"></i>
           </div>
           <div class="text-center fw-bold text-primary fs-5 mb-3" id="readV_slider">0 V</div>
         </div>
 
-        <!-- 3. Automated Ledger -->
         <div class="mb-4">
-          <div class="section-header">3. Data Ledger</div>
-          
+          <div class="section-header">2. Target Data Ledger</div>
           <label class="control-label mb-1">Terminal Fall Velocity (v_f)</label>
-          <div class="readout-box" id="readVf">Waiting...</div>
+          <div class="readout-box" id="readVf">No Target Selected</div>
 
           <label class="control-label mb-1">Terminal Rise Velocity (v_r)</label>
-          <div class="readout-box" id="readVr">Waiting...</div>
+          <div class="readout-box" id="readVr">No Target Selected</div>
           
           <button class="btn btn-success btn-sm w-100 fw-bold my-2 shadow-sm" onclick="calculateCharge()">CALCULATE CHARGE</button>
           
@@ -110,17 +101,21 @@
             Charge (q): ---<br>Electrons (n): ---
           </div>
         </div>
-
       </div>
 
       <!-- RIGHT COLUMN -->
-      <div class="col-lg-9 d-flex flex-column">
+      <div class="col-lg-9 d-flex flex-column align-items-center">
         
-        <div id="canvas-container" class="shadow-sm border"></div>
+        <!-- CSS OVERLAY WRAPPER -->
+        <div style="position: relative; width: 1050px; height: 650px; border-radius: 8px;" class="shadow-sm border">
+          <div id="canvas-container"></div>
+          <!-- Image rotated 90 degrees to point the nozzle left into the chamber -->
+          <img src="atomizer.png" alt="Atomizer" style="position: absolute; left: 740px; top: 105px; width: 60px; height: 80px; z-index: 10; pointer-events: none; transform: scaleX(-1);;" onerror="this.style.display='none'">
+        </div>
 
-        <div class="sensor-bar mt-3 p-3 d-flex justify-content-around align-items-center shadow-sm">
+        <div class="sensor-bar mt-3 p-3 w-100 d-flex justify-content-around align-items-center shadow-sm">
           <div>
-            <span class="control-label text-dark fw-bold me-2">Current Velocity:</span>
+            <span class="control-label text-dark fw-bold me-2">Target Velocity:</span>
             <span class="bg-white border rounded px-2 py-1 text-secondary fw-bold fs-6" id="hudVel">0.00e0 m/s</span>
           </div>
           <div>
@@ -129,10 +124,9 @@
           </div>
           <div>
             <span class="control-label text-dark fw-bold me-2">Status:</span>
-            <span class="bg-white border rounded px-2 py-1 text-success fw-bold fs-6" id="hudStatus">Accelerating</span>
+            <span class="bg-white border rounded px-2 py-1 text-secondary fw-bold fs-6" id="hudStatus">Select Droplet</span>
           </div>
         </div>
-
       </div>
 
     </div>
@@ -144,55 +138,37 @@
     <p class="text-muted small mb-4">How Millikan bypassed measuring the mass of the droplet directly by using two sequential kinematic states.</p>
     
     <div class="row g-4">
-      
-      <!-- Phase 1 Math -->
       <div class="col-md-4">
         <div class="math-box">
           <div class="math-title">Phase 1: Voltage OFF (Falling)</div>
           <p class="small text-muted mb-2">At terminal falling velocity (\(v_f\)), downward gravity (\(F_g\)) is balanced by upward buoyancy (\(F_b\)) and drag (\(F_d\)).</p>
-          <div class="text-center mb-3">
-            \( F_g = F_b + F_d \)
-          </div>
+          <div class="text-center mb-3">\( F_g = F_b + F_d \)</div>
           <p class="small text-muted mb-2">Substituting standard formulas:</p>
-          <div class="text-center">
-            \( mg = m_{air}g + 6\pi\eta r v_f \)
-          </div>
+          <div class="text-center">\( mg = m_{air}g + 6\pi\eta r v_f \)</div>
           <hr class="my-3 text-muted">
           <p class="small text-muted mb-2"><strong>Finding Radius (\(r\)):</strong> By substituting \(m = \frac{4}{3}\pi r^3 \rho\), we can isolate the radius of the invisible droplet purely from its speed:</p>
-          <div class="text-center">
-            \( r = \sqrt{\frac{9\eta v_f}{2g(\rho_{oil} - \rho_{air})}} \)
-          </div>
+          <div class="text-center">\( r = \sqrt{\frac{9\eta v_f}{2g(\rho_{oil} - \rho_{air})}} \)</div>
         </div>
       </div>
 
-      <!-- Phase 2 Math -->
       <div class="col-md-4">
         <div class="math-box">
           <div class="math-title">Phase 2: Voltage ON (Rising)</div>
           <p class="small text-muted mb-2">At terminal rising velocity (\(v_r\)), the upward electric force (\(F_e\)) and buoyancy balance downward gravity and drag.</p>
-          <div class="text-center mb-3">
-            \( F_e + F_b = F_g + F_d \)
-          </div>
+          <div class="text-center mb-3">\( F_e + F_b = F_g + F_d \)</div>
           <p class="small text-muted mb-2">Substituting the electric force (\(qE\)):</p>
-          <div class="text-center">
-            \( qE + m_{air}g = mg + 6\pi\eta r v_r \)
-          </div>
+          <div class="text-center">\( qE + m_{air}g = mg + 6\pi\eta r v_r \)</div>
           <hr class="my-3 text-muted">
           <p class="small text-muted mb-2">We isolate the electric force to prepare for substitution:</p>
-          <div class="text-center">
-            \( qE = (mg - m_{air}g) + 6\pi\eta r v_r \)
-          </div>
+          <div class="text-center">\( qE = (mg - m_{air}g) + 6\pi\eta r v_r \)</div>
         </div>
       </div>
 
-      <!-- The Substitution -->
       <div class="col-md-4">
         <div class="math-box border-primary">
           <div class="math-title text-success">The Master Equation</div>
           <p class="small text-muted mb-2">Notice from Phase 1 that the effective weight \((mg - m_{air}g)\) is exactly equal to the falling drag \((6\pi\eta r v_f)\). We can substitute this directly into Phase 2!</p>
-          <div class="text-center mb-3">
-            \( qE = (6\pi\eta r v_f) + 6\pi\eta r v_r \)
-          </div>
+          <div class="text-center mb-3">\( qE = (6\pi\eta r v_f) + 6\pi\eta r v_r \)</div>
           <p class="small text-muted mb-2">Factoring out the drag coefficient gives us the final equation to solve for Charge (\(q\)):</p>
           <div class="text-center p-2 bg-white border border-success rounded">
             <strong>\( q = \frac{6\pi\eta r (v_f + v_r)}{E} \)</strong>
@@ -200,7 +176,6 @@
           <p class="small text-muted mt-3 mb-0"><strong>Conclusion:</strong> We never needed to calculate the mass directly. The droplet's charge is derived entirely from its radius, the electric field, and its two velocities.</p>
         </div>
       </div>
-
     </div>
   </div>
 

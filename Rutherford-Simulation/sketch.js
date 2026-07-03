@@ -2,7 +2,7 @@
 let sessionLog = []; 
 let sessionStartTime = Date.now(); 
 let SCREEN_CENTER;
-let nucleiPositions = []; // Array to hold the 5 nuclei for foil mode
+let nucleiPositions = []; 
 let particles = [];
 let hitMarks = []; 
 const SIMULATION_K = 45; 
@@ -31,7 +31,6 @@ function setup() {
   
   SCREEN_CENTER = createVector(500, 300);
 
-  // Initialize the 5 nuclei arranged vertically in the metal strip
   let spacing = 40;
   for (let i = -2; i <= 2; i++) {
     nucleiPositions.push(createVector(SCREEN_CENTER.x, SCREEN_CENTER.y + (i * spacing)));
@@ -43,14 +42,23 @@ function draw() {
 
   let targetData = ELEMENT_DATA[currentTargetZ];
   let isSingleNucleus = document.getElementById('singleNucleusToggle').checked;
+  let isContinuousBeam = document.getElementById('continuousBeamToggle').checked;
   
-  // Determine which array of nuclei to process based on the toggle
+  // --- CONTINUOUS BEAM LOGIC ---
+  // Fires 1 particle roughly every 0.15 seconds (9 frames at 60 FPS)
+  if (isContinuousBeam && frameCount % 9 === 0) {
+    let energy = document.getElementById('energySlider').value;
+    // Slightly tighter spread for continuous beam to look like a steady stream
+    particles.push(new AlphaParticle(45, BOX_Y + random(-30, 30), parseFloat(energy)));
+    statFired++;
+    document.getElementById('statFired').innerText = statFired;
+  }
+  
   let activeNuclei = isSingleNucleus ? [SCREEN_CENTER] : nucleiPositions;
   
-  // Draw the Electric Fields first so they sit behind the nuclei
   drawElectricFields(targetData, currentTargetZ, activeNuclei);
 
-  // 1. Draw the Detector Screen (Fixed Gap)
+  // 1. Draw the Detector Screen
   let currentRadius = document.getElementById('radiusSlider').value;
   let gapCenterRad = PI; 
   let gapHalfRad = radians(12); 
@@ -66,7 +74,7 @@ function draw() {
   drawingContext.setLineDash([]); 
   pop();
 
-  // 2. Draw the Targets (Foil Strip or Single Nucleus)
+  // 2. Draw the Targets
   if (!isSingleNucleus) {
     push();
     rectMode(CENTER);
@@ -77,7 +85,6 @@ function draw() {
     pop();
   }
 
-  // Draw the active nuclei dots
   for (let pos of activeNuclei) {
     fill(targetData.color);
     stroke(80); 
@@ -92,7 +99,7 @@ function draw() {
     circle(mark.x, mark.y, 8);
   }
 
-  // 4. Draw the Fixed Lead Box
+  // 4. Draw the Fixed Lead Box & Beam Animation
   push();
   rectMode(CENTER);
   fill(160, 160, 165); 
@@ -100,9 +107,21 @@ function draw() {
   strokeWeight(2);
   rect(30, BOX_Y, 40, 80, 5); 
   
+  // The default dark slit
   fill(30); 
   noStroke();
   rect(45, BOX_Y, 15, 8); 
+
+  // Glowing red animation when the beam is actively firing
+  if (isContinuousBeam) {
+    // Math.sin creates a smooth pulsing visual effect
+    let pulseAlpha = 150 + 105 * sin(frameCount * 0.2);
+    fill(255, 50, 50, pulseAlpha);
+    drawingContext.shadowBlur = 15;
+    drawingContext.shadowColor = 'red';
+    rect(45, BOX_Y, 15, 8); 
+    drawingContext.shadowBlur = 0; // reset shadow
+  }
   pop();
 
   // 5. Process Particles
@@ -165,6 +184,11 @@ function fireBurst() {
   logEvent('FIRED_BURST'); 
 }
 
+function toggleContinuousBeam() {
+  let isContinuous = document.getElementById('continuousBeamToggle').checked;
+  logEvent(isContinuous ? 'CONTINUOUS_BEAM_STARTED' : 'CONTINUOUS_BEAM_STOPPED');
+}
+
 function clearExperiment() {
   particles = [];
   hitMarks = [];
@@ -195,9 +219,8 @@ class AlphaParticle {
 
       let forceMagnitude = (SIMULATION_K * ALPHA_CHARGE * targetZ) / (distance * distance);
       
-      // If 5 nuclei are acting at once, scale the force down to prevent an artificial "wall"
       if (!isSingle) {
-        forceMagnitude *= 1; 
+        forceMagnitude *= 0.4; 
       }
       
       force.setMag(forceMagnitude);

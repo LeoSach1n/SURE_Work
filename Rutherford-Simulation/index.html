@@ -58,6 +58,12 @@
                     <button id="fireBtn" class="action-btn" onclick="fireNewParticle()">SINGLE</button>
                     <button id="burstBtn" class="action-btn burst" onclick="fireBurst()">BURST</button>
                 </div>
+                
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #dc3545; font-weight: bold; margin-top:10px; padding: 5px; background: #ffeeba; border-radius: 5px; border: 1px solid #ffdf7e;">
+                    <input type="checkbox" id="continuousBeamToggle" style="width: 18px; height: 18px;" onchange="toggleContinuousBeam()"> 
+                    Continuous Beam Mode
+                </label>
+
                 <button class="action-btn clear" onclick="clearExperiment()">CLEAR DATA & SCREEN</button>
             </div>
 

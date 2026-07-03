@@ -1,0 +1,203 @@
+body {
+    background-color: #e9ecef; /* Light lab background */
+    color: #333333; /* Dark text */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    height: 100vh; 
+    overflow: hidden; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dashboard {
+    display: flex;
+    gap: 30px;
+    background-color: #ffffff; /* Clean white control panel */
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0px 15px 35px rgba(0,0,0,0.1); /* Soft shadow */
+    border: 1px solid #dee2e6;
+}
+
+.control-panel {
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+h2 {
+    margin: 0;
+    color: #0056b3; /* Academic blue */
+    font-size: 22px;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 10px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #495057;
+}
+
+/* Bright Periodic Table */
+.periodic-table {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.element-tile {
+    background-color: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    color: #495057;
+    padding: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: 0.2s;
+}
+
+.element-tile:hover { background-color: #e2e6ea; }
+.element-tile.active {
+    border-color: #0056b3;
+    background-color: #cce5ff;
+    color: #004085;
+}
+
+.atomic-num { display: block; font-size: 11px; color: #6c757d; text-align: left; }
+.symbol { display: block; font-size: 20px; font-weight: bold; }
+
+/* Sliders and Buttons */
+input[type=range] { width: 100%; cursor: pointer; }
+
+#burstBtn {
+    background-color: #ff8800;
+    color: white;
+    border: none;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+}
+
+#burstBtn:hover { 
+    background-color: #e67e22; 
+    transform: translateY(-1px);
+}
+
+.instructions {
+    font-size: 13px;
+    color: #004085;
+    background: #cce5ff;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #b8daff;
+}
+
+/* Canvas Container */
+#canvas-container canvas {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    box-shadow: inset 0px 0px 10px rgba(0,0,0,0.05);
+}
+
+/* Add this to the bottom of your style.css */
+
+.panel-section {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.panel-section h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 5px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 10px;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #0056b3;
+    color: white;
+}
+
+.action-btn.burst { background-color: #ff8800; }
+.action-btn.clear { background-color: #dc3545; margin-top: 5px; }
+.action-btn:hover { filter: brightness(1.1); }
+
+.data-readout {
+    background-color: #e2e3e5;
+    border-left: 5px solid #0056b3;
+}
+
+.data-readout p {
+    font-size: 14px;
+    margin: 5px 0;
+    font-weight: bold;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+}
+
+.stat-num {
+    background: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #0056b3;
+}
+
+/* Container for the right side */
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Space between canvas and stats */
+}
+
+/* Override the data-readout to be horizontal */
+.data-readout {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    padding: 20px;
+}
+
+.data-readout p {
+    font-size: 16px; /* Make text a bit larger to fill the space */
+    margin: 0;
+}
+
+.stat-num {
+    font-size: 18px;
+    padding: 4px 12px;
+}
+
+/* Remove standard number spinners */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+input[type=number] {
+    -moz-appearance: textfield; /* Firefox */
+    text-align: center; /* Centers the typed data */
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
