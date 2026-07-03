@@ -1,7 +1,8 @@
 // --- GLOBAL VARIABLES ---
 let sessionLog = []; 
 let sessionStartTime = Date.now(); 
-let nucleusPosition;
+let SCREEN_CENTER;
+let nucleiPositions = []; // Array to hold the 5 nuclei for foil mode
 let particles = [];
 let hitMarks = []; 
 const SIMULATION_K = 45; 
@@ -22,57 +23,66 @@ const ELEMENT_DATA = {
 };
 
 let currentTargetZ = 79; 
-const BOX_Y = 300; // Fixed Y coordinate for the lead box
+const BOX_Y = 300; 
 
 function setup() {
   let canvas = createCanvas(800, 600);
   canvas.parent('canvas-container'); 
   
-  nucleusPosition = createVector(500, 300);
+  SCREEN_CENTER = createVector(500, 300);
+
+  // Initialize the 5 nuclei arranged vertically in the metal strip
+  let spacing = 40;
+  for (let i = -2; i <= 2; i++) {
+    nucleiPositions.push(createVector(SCREEN_CENTER.x, SCREEN_CENTER.y + (i * spacing)));
+  }
 }
 
 function draw() {
   background(248, 249, 250);
 
   let targetData = ELEMENT_DATA[currentTargetZ];
+  let isSingleNucleus = document.getElementById('singleNucleusToggle').checked;
   
-  // Draw the Electric Field first so it sits behind the nucleus
-  drawElectricField(targetData, currentTargetZ);
+  // Determine which array of nuclei to process based on the toggle
+  let activeNuclei = isSingleNucleus ? [SCREEN_CENTER] : nucleiPositions;
+  
+  // Draw the Electric Fields first so they sit behind the nuclei
+  drawElectricFields(targetData, currentTargetZ, activeNuclei);
 
   // 1. Draw the Detector Screen (Fixed Gap)
   let currentRadius = document.getElementById('radiusSlider').value;
-  
-  // Hardcode the gap to face the lead box (180 degrees / PI radians)
   let gapCenterRad = PI; 
-  let gapHalfRad = radians(12); // 24 degree total gap
+  let gapHalfRad = radians(12); 
 
   push();
   noFill();
   stroke(180); 
   strokeWeight(3);
   drawingContext.setLineDash([10, 10]); 
-  arc(nucleusPosition.x, nucleusPosition.y, currentRadius * 2, currentRadius * 2, 
+  arc(SCREEN_CENTER.x, SCREEN_CENTER.y, currentRadius * 2, currentRadius * 2, 
       gapCenterRad + gapHalfRad, 
       gapCenterRad - gapHalfRad + TWO_PI);
   drawingContext.setLineDash([]); 
   pop();
 
-  // 2. Draw the Target Nucleus
-  let toggleEl = document.getElementById('pointNucleusToggle');
-  let isPoint = toggleEl ? toggleEl.checked : false;
-  let currentDrawRadius = isPoint ? 5 : targetData.radius;
+  // 2. Draw the Targets (Foil Strip or Single Nucleus)
+  if (!isSingleNucleus) {
+    push();
+    rectMode(CENTER);
+    fill(220, 220, 225, 150); 
+    stroke(120);
+    strokeWeight(1.5);
+    rect(SCREEN_CENTER.x, SCREEN_CENTER.y, 40, 220, 4);
+    pop();
+  }
 
-  fill(targetData.color);
-  stroke(100); 
-  strokeWeight(2);
-  circle(nucleusPosition.x, nucleusPosition.y, currentDrawRadius * 2);
-  
-  if (!isPoint) { 
-    fill(0);
-    noStroke();
-    textSize(targetData.radius * 0.6); 
-    textAlign(CENTER, CENTER);
-    text(targetData.symbol, nucleusPosition.x, nucleusPosition.y);
+  // Draw the active nuclei dots
+  for (let pos of activeNuclei) {
+    fill(targetData.color);
+    stroke(80); 
+    strokeWeight(1.5);
+    circle(pos.x, pos.y, 8); 
   }
 
   // 3. Draw the Scintillation Marks
@@ -98,8 +108,8 @@ function draw() {
   // 5. Process Particles
   for (let i = particles.length - 1; i >= 0; i--) {
     let p = particles[i];
-    p.applyRepulsion(nucleusPosition, currentTargetZ);
-    p.update(nucleusPosition); 
+    p.applyRepulsion(activeNuclei, currentTargetZ, isSingleNucleus);
+    p.update(SCREEN_CENTER); 
     p.show();
 
     if (p.state === 'HIT') {
@@ -136,7 +146,7 @@ function setElement(z, btnElement) {
 
 function fireNewParticle() {
   let energy = document.getElementById('energySlider').value;
-  particles.push(new AlphaParticle(45, BOX_Y + random(-30,30), parseFloat(energy)));
+  particles.push(new AlphaParticle(45, BOX_Y + random(-25, 25), parseFloat(energy)));
   
   statFired++;
   document.getElementById('statFired').innerText = statFired;
@@ -146,7 +156,7 @@ function fireNewParticle() {
 function fireBurst() {
   let energy = document.getElementById('energySlider').value;
   for (let i = 0; i < 20; i++) { 
-    let spreadY = BOX_Y + random(-30, 30);
+    let spreadY = BOX_Y + random(-25, 25);
     particles.push(new AlphaParticle(45, spreadY, parseFloat(energy)));
   }
   
@@ -175,22 +185,27 @@ class AlphaParticle {
     this.state = 'OUTSIDE'; 
   }
 
-  applyRepulsion(targetVector, targetZ) {
-    let force = p5.Vector.sub(this.pos, targetVector);
-    let distance = force.mag();
-    
-    let toggleEl = document.getElementById('pointNucleusToggle');
-    let isPoint = toggleEl ? toggleEl.checked : false;
-    let physicsRadius = isPoint ? 5 : (targetVector.radius || 15);
-    
-    distance = constrain(distance, physicsRadius, 1000); 
+  applyRepulsion(nucleiArray, targetZ, isSingle) {
+    for (let nucPos of nucleiArray) {
+      let force = p5.Vector.sub(this.pos, nucPos);
+      let distance = force.mag();
+      
+      let physicsRadius = 4; 
+      distance = constrain(distance, physicsRadius, 1000); 
 
-    let forceMagnitude = (SIMULATION_K * ALPHA_CHARGE * targetZ) / (distance * distance);
-    force.setMag(forceMagnitude);
-    this.acc.add(force);
+      let forceMagnitude = (SIMULATION_K * ALPHA_CHARGE * targetZ) / (distance * distance);
+      
+      // If 5 nuclei are acting at once, scale the force down to prevent an artificial "wall"
+      if (!isSingle) {
+        forceMagnitude *= 1; 
+      }
+      
+      force.setMag(forceMagnitude);
+      this.acc.add(force); 
+    }
   }
 
-  update(nucleusPos) {
+  update(centerPos) {
     this.vel.add(this.acc); 
     this.pos.add(this.vel); 
     this.acc.mult(0); 
@@ -199,13 +214,12 @@ class AlphaParticle {
     if (this.history.length > 50) this.history.splice(0, 1);
 
     let currentRadius = document.getElementById('radiusSlider').value;
-    let distToNucleus = p5.Vector.dist(this.pos, nucleusPos); 
+    let distToCenter = p5.Vector.dist(this.pos, centerPos); 
     
-    let angle = atan2(this.pos.y - nucleusPos.y, this.pos.x - nucleusPos.x); 
+    let angle = atan2(this.pos.y - centerPos.y, this.pos.x - centerPos.x); 
     let angleDeg = degrees(angle);
     if (angleDeg < 0) angleDeg += 360; 
 
-    // Hardcode gap logic to exactly 180 degrees
     let gapCenter = 180; 
     let gapHalfWidth = 12; 
     let diff = Math.abs(angleDeg - gapCenter) % 360;
@@ -213,7 +227,7 @@ class AlphaParticle {
     let isInGap = shortestDiff <= gapHalfWidth;
 
     if (this.state === 'OUTSIDE') {
-      if (distToNucleus < currentRadius) {
+      if (distToCenter < currentRadius) {
         if (isInGap) {
           this.state = 'INSIDE'; 
         } else {
@@ -222,7 +236,7 @@ class AlphaParticle {
       }
     } 
     else if (this.state === 'INSIDE') {
-      if (distToNucleus >= currentRadius) {
+      if (distToCenter >= currentRadius) {
         if (isInGap) {
           this.state = 'ESCAPED'; 
         } else {
@@ -251,22 +265,24 @@ class AlphaParticle {
   }
 }
 
-function drawElectricField(targetData, zValue) {
+function drawElectricFields(targetData, zValue, activeNuclei) {
   let showField = document.getElementById('fieldToggle').checked;
   if (!showField) return; 
 
   push();
   noFill();
   
-  let maxFieldReach = zValue * 4; 
+  let maxFieldReach = zValue * 3; 
   
-  for (let r = targetData.radius + 15; r < maxFieldReach; r += 20) {
-    let opacity = map(r, targetData.radius, maxFieldReach, 120, 0);
-    
-    stroke(targetData.color[0], targetData.color[1], targetData.color[2], opacity);
-    strokeWeight(1.5);
-    
-    circle(nucleusPosition.x, nucleusPosition.y, r * 2);
+  for (let pos of activeNuclei) {
+    for (let r = 15; r < maxFieldReach; r += 20) {
+      let opacity = map(r, 10, maxFieldReach, 80, 0); 
+      
+      stroke(targetData.color[0], targetData.color[1], targetData.color[2], opacity);
+      strokeWeight(1);
+      
+      circle(pos.x, pos.y, r * 2);
+    }
   }
   pop();
 }
@@ -274,9 +290,8 @@ function drawElectricField(targetData, zValue) {
 function logEvent(eventName) {
   let currentZ = currentTargetZ;
   let currentEnergy = document.getElementById('energySlider').value;
-  
-  let toggleEl = document.getElementById('pointNucleusToggle');
-  let isPointSizedChecked = toggleEl ? toggleEl.checked : false;
+  let singleToggle = document.getElementById('singleNucleusToggle');
+  let isSingleMode = singleToggle ? singleToggle.checked : false;
 
   let eventPayload = {
     timestamp: new Date().toISOString(),
@@ -285,7 +300,7 @@ function logEvent(eventName) {
     labState: {
       targetZ: currentZ,
       beamEnergy: parseInt(currentEnergy),
-      isPointSized: isPointSizedChecked 
+      isSingleNucleus: isSingleMode
     },
     currentStats: {
       fired: statFired,
