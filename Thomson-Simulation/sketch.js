@@ -12,7 +12,7 @@ let V_X = 2e7;
 // Canvas Geometry & Scale
 const PX_PER_METER = 2000; 
 const CENTER_Y = 300; 
-const GUN_X = 250; // Shifted 100px right to perfectly center the apparatus
+const GUN_X = 200; // Shifted left to perfectly center within the new 980px canvas
 
 // Positions in Meters
 const PLATE_START_M = 0.10; 
@@ -25,7 +25,7 @@ const PLATE_END = GUN_X + (PLATE_END_M * PX_PER_METER);
 const SCREEN_X = GUN_X + (SCREEN_M * PX_PER_METER);
 
 function setup() {
-  let canvas = createCanvas(1050, 600);
+  let canvas = createCanvas(980, 600); // Shrunk to 980px to safely fit inside the Bootstrap container
   canvas.parent('canvas-container');
   updatePhysics();
 }
@@ -41,9 +41,9 @@ function draw() {
     // 1. Draw Cathode Ray Tube 
     stroke(0); strokeWeight(3); noFill();
     beginShape();
-    vertex(110, CENTER_Y - 40); vertex(300, CENTER_Y - 40);
+    vertex(60, CENTER_Y - 40); vertex(250, CENTER_Y - 40);
     vertex(SCREEN_X - 60, CENTER_Y - 230); vertex(SCREEN_X - 60, CENTER_Y + 230);
-    vertex(300, CENTER_Y + 40); vertex(110, CENTER_Y + 40);
+    vertex(250, CENTER_Y + 40); vertex(60, CENTER_Y + 40);
     endShape(CLOSE);
 
     noFill();
@@ -55,46 +55,46 @@ function draw() {
     // 2. Draw Electron Gun 
     push();
     fill(10,10,10, 40); stroke(0,0,0, 150); strokeWeight(2);
-    rect(115, CENTER_Y - 35, 140, 70, 20); 
+    rect(65, CENTER_Y - 35, 140, 70, 20); 
     stroke(255, 255, 255, 200); strokeWeight(3);
-    line(125, CENTER_Y - 25, 235, CENTER_Y - 25);
+    line(75, CENTER_Y - 25, 185, CENTER_Y - 25);
     pop();
 
     push();
     stroke(255, 150, 0); strokeWeight(2); noFill();
     drawingContext.shadowBlur = 10; drawingContext.shadowColor = 'orange';
-    beginShape(); vertex(125, CENTER_Y - 15); vertex(135, CENTER_Y - 5); vertex(125, CENTER_Y + 5); vertex(135, CENTER_Y + 15); endShape();
+    beginShape(); vertex(75, CENTER_Y - 15); vertex(85, CENTER_Y - 5); vertex(75, CENTER_Y + 5); vertex(85, CENTER_Y + 15); endShape();
     pop();
 
-    push(); fill(0, 100, 255); noStroke(); rect(148, CENTER_Y - 15, 6, 30, 2); fill(0, 100, 255); textSize(14); textStyle(BOLD); textAlign(CENTER); text("C (-)", 151, CENTER_Y - 50); pop();
+    push(); fill(0, 100, 255); noStroke(); rect(98, CENTER_Y - 15, 6, 30, 2); fill(0, 100, 255); textSize(14); textStyle(BOLD); textAlign(CENTER); text("C (-)", 101, CENTER_Y - 50); pop();
     push(); stroke(220, 50, 50); strokeWeight(4); noFill(); ellipse(GUN_X, CENTER_Y, 10, 45); fill(220, 50, 50); noStroke(); textSize(14); textStyle(BOLD); textAlign(CENTER); text("A (+)", GUN_X, CENTER_Y - 50); pop();
 
     fill(255); textSize(15); textStyle(BOLD); textAlign(CENTER);
-    text("ELECTRON GUN", 195, CENTER_Y - 85);
+    text("ELECTRON GUN", 145, CENTER_Y - 85);
 
     // HIGH VOLTAGE CIRCUIT 
     push();
     stroke(80); strokeWeight(2); noFill();
     
-    line(151, CENTER_Y + 15, 151, CENTER_Y + 120); 
-    line(151, CENTER_Y + 120, 185, CENTER_Y + 120);
+    line(101, CENTER_Y + 15, 101, CENTER_Y + 120); 
+    line(101, CENTER_Y + 120, 135, CENTER_Y + 120);
     
     line(GUN_X, CENTER_Y + 22, GUN_X, CENTER_Y + 120);
-    line(GUN_X, CENTER_Y + 120, 215, CENTER_Y + 120);
+    line(GUN_X, CENTER_Y + 120, 165, CENTER_Y + 120);
 
     stroke(0); strokeCap(SQUARE);
-    strokeWeight(4); line(185, CENTER_Y + 110, 185, CENTER_Y + 130); 
-    strokeWeight(2); line(195, CENTER_Y + 105, 195, CENTER_Y + 135); 
-    strokeWeight(4); line(205, CENTER_Y + 110, 205, CENTER_Y + 130); 
-    strokeWeight(2); line(215, CENTER_Y + 105, 215, CENTER_Y + 135); 
+    strokeWeight(4); line(135, CENTER_Y + 110, 135, CENTER_Y + 130); 
+    strokeWeight(2); line(145, CENTER_Y + 105, 145, CENTER_Y + 135); 
+    strokeWeight(4); line(155, CENTER_Y + 110, 155, CENTER_Y + 130); 
+    strokeWeight(2); line(165, CENTER_Y + 105, 165, CENTER_Y + 135); 
     
     strokeWeight(2);
-    line(185, CENTER_Y + 120, 215, CENTER_Y + 120);
+    line(135, CENTER_Y + 120, 165, CENTER_Y + 120);
 
     fill(0, 100, 255); noStroke(); textSize(18); textStyle(BOLD); textAlign(CENTER);
-    text("-", 172, CENTER_Y + 135);
+    text("-", 122, CENTER_Y + 135);
     fill(220, 50, 50);
-    text("+", 228, CENTER_Y + 135);
+    text("+", 178, CENTER_Y + 135);
     pop();
 
     // 3. Central Axis
@@ -290,7 +290,6 @@ function updatePhysics() {
   if(document.getElementById('readB')) document.getElementById('readB').innerText = valB + ' µT';
 }
 
-// --- EXPERIMENTAL MATH VALIDATOR ---
 function calculateEM() {
   let y_cm = parseFloat(document.getElementById('inpY').value);
   let E3 = parseFloat(document.getElementById('inpE3').value);

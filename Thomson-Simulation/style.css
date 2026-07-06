@@ -201,15 +201,23 @@ input[type=number] {
     border: 1px solid #ced4da;
     border-radius: 4px;
 
-    /* Canvas Container */
-#canvas-container canvas {
+   /* Ensure the canvas and its container scale flawlessly with NO borders */
+#canvas-container {
+    width: 100%;
+    overflow: hidden;
     border-radius: 8px;
-    border: 1px solid #dee2e6;
-    box-shadow: inset 0px 0px 10px rgba(0,0,0,0.05);
-    max-width: 100%; /* Ensures the canvas scales dynamically to prevent border clipping */
-    height: auto;    /* Maintains aspect ratio during scaling */
+    background-color: transparent;
+    border: none; /* explicitly removes any container borders */
+}
+
+#canvas-container canvas {
     display: block;
     margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+    border: none; /* explicitly removes the canvas border */
+    outline: none;
 }
+    
 
 }
