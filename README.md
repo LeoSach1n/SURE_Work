@@ -26,7 +26,7 @@ A visualization of the gold foil experiment demonstrating Coulomb's Law of elect
 * **The Engine:** Uses vector mathematics to calculate the continuous repulsive forces between positively charged alpha particles and a heavy atomic nucleus.
 * **Key Features:** Users can swap target elements (Gold, Silver, Copper, Aluminum) to instantly visualize how changing the atomic number (Z) scales the electric field and alters scattering trajectories. Includes burst/continuous beam emitters and an angular detector screen.
 
-### 4. Geometric Kinematic Scattering (Rigid-Body Mechanics)
+### 4. Solid Sphere Scattering (Rigid-Body Mechanics)
 A transition from atomic forces to classical elastic collisions, wrapped in an interactive, deductive-reasoning puzzle.
 * **The Engine:** Calculates exact kinematic reflections across complex boundaries, utilizing mathematical sub-stepping to prevent high-velocity tunneling through radial curves (spheres), linear segments (squares), and sloped intersections (triangles).
 * **Key Features:** Features a draggable vertical-axis projectile launcher, continuous firing modes, and a "Hidden Target" game mode where the object is rendered invisible, challenging the user to deduce the underlying geometry based strictly on bounce trajectories and impact angles.
