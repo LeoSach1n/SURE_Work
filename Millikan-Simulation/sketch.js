@@ -52,6 +52,13 @@ function mousePressed() {
 }
 
 function sprayDropletBatch() {
+  // --- NEW: Reset Voltage to Default (0) ---
+  let vSlider = document.getElementById('sliderV');
+  if (vSlider) {
+    vSlider.value = 0;
+    updatePhysics(); // Updates the internal variables and the text label
+  }
+
   let shared_n = floor(random(1, 6)); 
   let shared_q = shared_n * e_charge;
   let shared_r = random(1.5e-6, 2.5e-6); 
@@ -134,13 +141,10 @@ function drawApparatus() {
 
   drawCircuit(cx);
 
-  // Removed fallback geometric atomizer
-
   // Labels
   push();
   fill(80); noStroke(); textSize(12); textStyle(BOLD);
   textAlign(CENTER, BOTTOM);
-  // Shifted text 20 pixels higher
   text(" CLICK TO\nSPRAY", cx + 253, PLATE_TOP_PX - 100);
   textAlign(RIGHT, BOTTOM);
   fill('#dc3545'); text("CHARGED PLATE (+)", cx - 250, PLATE_TOP_PX - 5);
@@ -189,10 +193,7 @@ function updateDropletsPhysics() {
     if (d.x_offset > 120 || d.x_offset < -120) d.x_vel *= -1; 
     
     // --- VELOCITY LOCKING LOGIC ---
-    // Only lock velocities if the droplet is freely floating in the chamber
     if (d.y_m > 0 && d.y_m < d_plates) {
-      
-      // If voltage changed, unlock V_r so a new one can be captured
       if (appliedVoltage > 0 && d.v_locked_voltage !== null && d.v_locked_voltage !== appliedVoltage) {
         d.v_rise_locked = null;
       }
@@ -201,14 +202,13 @@ function updateDropletsPhysics() {
       if (relativeError < 0.01) {
         if (appliedVoltage === 0) {
           d.v_fall_locked = d.v_m; 
-        } else if (d.v_m < 0) { // Moving upwards
+        } else if (d.v_m < 0) { 
           d.v_rise_locked = -d.v_m; 
           d.v_locked_voltage = appliedVoltage;
         }
       }
     }
 
-    // Plate Collision
     if (d.y_m <= 0) { d.y_m = 0; d.v_m = 0; }
     if (d.y_m >= d_plates) { d.y_m = d_plates; d.v_m = 0; }
   }
