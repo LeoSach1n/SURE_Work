@@ -2,15 +2,20 @@
 let SCREEN_CENTER;
 let projectiles = [];
 let hitMarks = []; 
+let confettis = []; 
 
 let currentTargetShape = 'sphere'; 
+let isTargetHidden = false; 
+
+// Draggable Box Variables
+let boxY = 300; 
+let isDraggingBox = false;
 
 // Data Tracking Variables
 let statFired = 0;
 let statHits = 0;
 let statEscaped = 0;
 
-const BASE_BOX_Y = 300; 
 const TARGET_RADIUS = 60; 
 
 // Triangle Geometry Cache
@@ -22,23 +27,34 @@ function setup() {
   
   SCREEN_CENTER = createVector(500, 300);
 
-  // Pre-calculate triangle vertices (Equilateral pointing UP)
+  // Pre-calculate triangle vertices (Clockwise layout)
   let R = TARGET_RADIUS;
   let cos30 = sqrt(3) / 2;
   let sin30 = 0.5;
   triV1 = createVector(SCREEN_CENTER.x, SCREEN_CENTER.y - R); // Top
-  triV2 = createVector(SCREEN_CENTER.x - R * cos30, SCREEN_CENTER.y + R * sin30); // Bottom Left
-  triV3 = createVector(SCREEN_CENTER.x + R * cos30, SCREEN_CENTER.y + R * sin30); // Bottom Right
-  triEdges = [ [triV1, triV2], [triV2, triV3], [triV3, triV1] ];
+  triV3 = createVector(SCREEN_CENTER.x + R * cos30, SCREEN_CENTER.y + R * sin30); // Bot-Right
+  triV2 = createVector(SCREEN_CENTER.x - R * cos30, SCREEN_CENTER.y + R * sin30); // Bot-Left
+  
+  // Edges arranged clockwise to easily generate outward normals
+  triEdges = [ [triV1, triV3], [triV3, triV2], [triV2, triV1] ];
 }
 
 function draw() {
   background(248, 249, 250);
 
+  // --- CONTINUOUS FIRE LOGIC ---
+  let isContinuousFire = document.getElementById('continuousFireToggle').checked;
+  if (isContinuousFire && frameCount % 12 === 0) { 
+    let velocity = document.getElementById('velocitySlider').value;
+    projectiles.push(new Projectile(45, boxY, parseFloat(velocity)));
+    statFired++;
+    document.getElementById('statFired').innerText = statFired;
+  }
+
   // 1. Draw the Detector Screen
   let currentRadius = document.getElementById('radiusSlider').value;
   let gapCenterRad = PI; 
-  let gapHalfRad = radians(12); 
+  let gapHalfRad = radians(25); 
 
   push();
   noFill();
@@ -51,14 +67,12 @@ function draw() {
   drawingContext.setLineDash([]); 
   pop();
 
-  // 2. Draw the Target Object (If not hidden)
-  let hideTarget = document.getElementById('hideTargetToggle').checked;
-  
-  if (!hideTarget) {
+  // 2. Draw the Target Object OR the Question Mark
+  if (!isTargetHidden) {
     push();
     drawingContext.shadowBlur = 15;
     drawingContext.shadowColor = 'rgba(0,0,0,0.3)';
-    fill('#4a90e2'); // Steel blue
+    fill('#4a90e2'); 
     stroke('#0d47a1');
     strokeWeight(2);
 
@@ -82,6 +96,15 @@ function draw() {
       triangle(triV1.x, triV1.y, triV2.x, triV2.y, triV3.x, triV3.y);
     }
     pop();
+  } else {
+    push();
+    fill(40); 
+    noStroke();
+    textSize(80);
+    textStyle(BOLD);
+    textAlign(CENTER, CENTER);
+    text("?", SCREEN_CENTER.x, SCREEN_CENTER.y);
+    pop();
   }
 
   // 3. Draw the Screen Hits
@@ -91,31 +114,43 @@ function draw() {
     circle(mark.x, mark.y, 8);
   }
 
-  // 4. Draw the Firing Box at the custom Y-Offset
-  let yOffset = parseInt(document.getElementById('yOffsetSlider').value);
-  let currentBoxY = BASE_BOX_Y + yOffset;
-
+  // 4. Draw the Draggable Firing Box
   push();
   rectMode(CENTER);
   fill(160, 160, 165); 
-  stroke(100);
-  strokeWeight(2);
-  rect(30, currentBoxY, 40, 80, 5); 
+  
+  if (isDraggingBox) {
+    stroke(0, 150, 255); 
+    strokeWeight(3);
+  } else {
+    stroke(100);
+    strokeWeight(2);
+  }
+  
+  rect(30, boxY, 40, 80, 5); 
   
   fill(30); 
   noStroke();
-  rect(45, currentBoxY, 15, 8); 
+  rect(45, boxY, 15, 8); 
+
+  if (isContinuousFire) {
+    let pulseAlpha = 150 + 105 * sin(frameCount * 0.2);
+    fill(255, 50, 50, pulseAlpha);
+    drawingContext.shadowBlur = 15;
+    drawingContext.shadowColor = 'red';
+    rect(45, boxY, 15, 8); 
+    drawingContext.shadowBlur = 0; 
+  }
   pop();
 
   // 5. Process Projectiles
   for (let i = projectiles.length - 1; i >= 0; i--) {
     let p = projectiles[i];
     
-    p.checkCollision();
+    // update handles sub-stepping and checkCollision() internally
     p.update(SCREEN_CENTER); 
     p.show();
 
-    // State Machine routing
     if (p.state === 'HIT') {
       hitMarks.push(createVector(p.pos.x, p.pos.y));
       if (hitMarks.length > 50) hitMarks.splice(0, 1);
@@ -136,22 +171,99 @@ function draw() {
       projectiles.splice(i, 1);
     }
   }
+
+  // 6. Draw Confetti Overlay
+  drawConfetti();
 }
 
-// --- HTML TRIGGER FUNCTIONS ---
-function setTargetShape(shape, btnElement) {
-  currentTargetShape = shape;
+// --- INTERACTIVITY: DRAG BOX ---
+function mousePressed() {
+  if (mouseX > 10 && mouseX < 50 && mouseY > boxY - 40 && mouseY < boxY + 40) {
+    isDraggingBox = true;
+  }
+}
+
+function mouseDragged() {
+  if (isDraggingBox) {
+    boxY = constrain(mouseY, 50, height - 50); 
+  }
+}
+
+function mouseReleased() {
+  isDraggingBox = false;
+}
+
+// --- HTML TRIGGER FUNCTIONS & GAME LOGIC ---
+
+function handleShapeSelection(shape, btnElement) {
+  if (isTargetHidden) {
+    if (shape === currentTargetShape) {
+      triggerConfetti();
+      isTargetHidden = false; 
+      
+      document.getElementById('continuousFireToggle').checked = false;
+
+      let btn = document.getElementById('hideToggleBtn');
+      btn.innerHTML = "🙈 HIDE TARGET & GUESS";
+      btn.style.backgroundColor = "#6c757d"; 
+      document.getElementById('shapeLabel').innerText = "Target Object Shape";
+      
+      let buttons = document.getElementsByClassName('element-tile');
+      for (let b of buttons) { b.classList.remove('active'); }
+      btnElement.classList.add('active');
+
+    } else {
+      let originalBg = btnElement.style.backgroundColor;
+      let originalBorder = btnElement.style.borderColor;
+      btnElement.style.backgroundColor = "#f8d7da"; 
+      btnElement.style.borderColor = "#dc3545"; 
+      
+      setTimeout(() => {
+        btnElement.style.backgroundColor = originalBg;
+        btnElement.style.borderColor = originalBorder;
+      }, 400); 
+    }
+  } else {
+    currentTargetShape = shape;
+    let buttons = document.getElementsByClassName('element-tile');
+    for (let b of buttons) { b.classList.remove('active'); }
+    btnElement.classList.add('active');
+  }
+}
+
+function toggleHideTarget() {
+  isTargetHidden = !isTargetHidden;
+  let btn = document.getElementById('hideToggleBtn');
+  let shapeLabel = document.getElementById('shapeLabel');
   let buttons = document.getElementsByClassName('element-tile');
-  for (let b of buttons) { b.classList.remove('active'); }
-  btnElement.classList.add('active');
+
+  if (isTargetHidden) {
+    let shapes = ['sphere', 'square', 'triangle'];
+    currentTargetShape = random(shapes);
+    clearExperiment(); 
+    
+    btn.innerHTML = "🛑 GIVE UP & REVEAL";
+    btn.style.backgroundColor = "#dc3545"; 
+    shapeLabel.innerText = "🤔 Guess the Hidden Shape!";
+    
+    for (let b of buttons) { b.classList.remove('active'); }
+
+  } else {
+    btn.innerHTML = "🙈 HIDE TARGET & GUESS";
+    btn.style.backgroundColor = "#6c757d"; 
+    shapeLabel.innerText = "Target Object Shape";
+    
+    for (let b of buttons) { 
+      if (b.getAttribute('data-shape') === currentTargetShape) {
+        b.classList.add('active');
+      }
+    }
+  }
 }
 
 function fireNewProjectile() {
   let velocity = document.getElementById('velocitySlider').value;
-  let yOffset = parseInt(document.getElementById('yOffsetSlider').value);
-  
-  // Fires exactly from the chosen gun position (No randomization)
-  projectiles.push(new Projectile(45, BASE_BOX_Y + yOffset, parseFloat(velocity)));
+  projectiles.push(new Projectile(45, boxY, parseFloat(velocity)));
   
   statFired++;
   document.getElementById('statFired').innerText = statFired;
@@ -164,6 +276,45 @@ function clearExperiment() {
   document.getElementById('statFired').innerText = 0;
   document.getElementById('statHits').innerText = 0;
   document.getElementById('statEscaped').innerText = 0;
+  document.getElementById('statAngle').innerText = '---°';
+}
+
+function triggerConfetti() {
+  for (let i = 0; i < 150; i++) {
+    confettis.push({
+      x: SCREEN_CENTER.x,
+      y: SCREEN_CENTER.y,
+      vx: random(-8, 8),
+      vy: random(-10, -20), 
+      c: color(random(255), random(255), random(255)), 
+      size: random(6, 12),
+      angle: random(TWO_PI),
+      spin: random(-0.3, 0.3)
+    });
+  }
+}
+
+function drawConfetti() {
+  for (let i = confettis.length - 1; i >= 0; i--) {
+    let c = confettis[i];
+    c.vy += 0.4; 
+    c.x += c.vx;
+    c.y += c.vy;
+    c.angle += c.spin;
+    
+    push();
+    translate(c.x, c.y);
+    rotate(c.angle);
+    fill(c.c);
+    noStroke();
+    rectMode(CENTER);
+    rect(0, 0, c.size, c.size);
+    pop();
+    
+    if (c.y > height + 20) {
+      confettis.splice(i, 1);
+    }
+  }
 }
 
 // ---------------------------------------------------------
@@ -184,27 +335,37 @@ class Projectile {
       let rTotal = TARGET_RADIUS + this.radius;
       let d = p5.Vector.dist(this.pos, SCREEN_CENTER);
       if (d <= rTotal) {
-        let n = p5.Vector.sub(this.pos, SCREEN_CENTER).normalize();
+        let n;
+        if (d === 0) n = createVector(-1, 0); 
+        else n = p5.Vector.sub(this.pos, SCREEN_CENTER).normalize();
         this.executeReflection(n, rTotal - d);
       }
     } 
     else if (currentTargetShape === 'square') {
-      // Axis-Aligned Bounding Box Collision
       let cx = constrain(this.pos.x, SCREEN_CENTER.x - TARGET_RADIUS, SCREEN_CENTER.x + TARGET_RADIUS);
       let cy = constrain(this.pos.y, SCREEN_CENTER.y - TARGET_RADIUS, SCREEN_CENTER.y + TARGET_RADIUS);
       let closest = createVector(cx, cy);
       let d = p5.Vector.dist(this.pos, closest);
       
       if (d <= this.radius) {
-        let n;
-        if (d === 0) n = createVector(-1, 0); // Fallback if deep inside
-        else n = p5.Vector.sub(this.pos, closest).normalize();
+        let edgeNormal = createVector(-1, 0); // Default pointing left
+        if (cx === SCREEN_CENTER.x - TARGET_RADIUS) edgeNormal = createVector(-1, 0);
+        else if (cx === SCREEN_CENTER.x + TARGET_RADIUS) edgeNormal = createVector(1, 0);
+        else if (cy === SCREEN_CENTER.y - TARGET_RADIUS) edgeNormal = createVector(0, -1);
+        else if (cy === SCREEN_CENTER.y + TARGET_RADIUS) edgeNormal = createVector(0, 1);
+
+        let pc = p5.Vector.sub(this.pos, closest);
+        let bestNormal = edgeNormal;
         
-        this.executeReflection(n, this.radius - d);
+        // If particle center is outside the square boundary, use radial normal for rounded corners
+        if (pc.mag() > 0 && pc.dot(edgeNormal) > 0) {
+          bestNormal = pc.normalize();
+        }
+        
+        this.executeReflection(bestNormal, this.radius - d);
       }
     } 
     else if (currentTargetShape === 'triangle') {
-      // Point-to-Line Segment Collision across all 3 edges
       let minDist = Infinity;
       let bestNormal = null;
       
@@ -214,15 +375,24 @@ class Projectile {
         let AB = p5.Vector.sub(B, A);
         let AP = p5.Vector.sub(this.pos, A);
         
-        // Find closest point on the segment
         let t = constrain(AP.dot(AB) / AB.magSq(), 0, 1);
         let closest = p5.Vector.add(A, p5.Vector.mult(AB, t));
         let d = p5.Vector.dist(this.pos, closest);
         
         if (d < minDist) {
           minDist = d;
-          if (d > 0) bestNormal = p5.Vector.sub(this.pos, closest).normalize();
-          else bestNormal = createVector(-1, 0);
+          
+          // Since vertices are clockwise, (AB.y, -AB.x) ALWAYS points strictly outwards
+          let edgeNormal = createVector(AB.y, -AB.x).normalize();
+          
+          let pc = p5.Vector.sub(this.pos, closest);
+          // If the particle is outside the triangle edge, use radial normal for rounded corners
+          if (pc.mag() > 0 && pc.dot(edgeNormal) > 0) {
+            bestNormal = pc.normalize();
+          } else {
+            // If it tunneled inside, forcefully use the outward-facing edge normal
+            bestNormal = edgeNormal;
+          }
         }
       }
       
@@ -239,13 +409,33 @@ class Projectile {
       this.vel.sub(reflection);
       this.hasBounced = true; 
       
-      // Resolve overlap so it physically stops at the boundary
+      // Push particle perfectly back to the boundary surface
       this.pos.add(p5.Vector.mult(normalVector, overlap));
     }
   }
 
+  recordHitAngle(centerPos) {
+    let angle = atan2(this.pos.y - centerPos.y, this.pos.x - centerPos.x);
+    let deg = degrees(angle);
+    let cartesianDeg = -deg;
+    if (cartesianDeg < 0) cartesianDeg += 360;
+    document.getElementById('statAngle').innerText = cartesianDeg.toFixed(1) + '°';
+  }
+
   update(centerPos) {
-    this.pos.add(this.vel); 
+    // SUB-STEPPING: Slice the velocity into 3 micro-frames per frame to completely prevent tunneling
+    let steps = 3;
+    let subVel = p5.Vector.div(this.vel, steps);
+
+    for(let s = 0; s < steps; s++) {
+        this.pos.add(subVel); 
+        this.checkCollision();
+        
+        // If a collision happened during this micro-step, update the velocity for the remaining micro-steps
+        if (this.hasBounced) {
+            subVel = p5.Vector.div(this.vel, steps);
+        }
+    }
 
     this.history.push(createVector(this.pos.x, this.pos.y));
     if (this.history.length > 50) this.history.splice(0, 1);
@@ -258,21 +448,29 @@ class Projectile {
     if (angleDeg < 0) angleDeg += 360; 
 
     let gapCenter = 180; 
-    let gapHalfWidth = 12; 
+    let gapHalfWidth = 25; 
     let diff = Math.abs(angleDeg - gapCenter) % 360;
     let shortestDiff = diff > 180 ? 360 - diff : diff;
     let isInGap = shortestDiff <= gapHalfWidth;
 
     if (this.state === 'OUTSIDE') {
       if (distToCenter < currentRadius) {
-        if (isInGap) this.state = 'INSIDE'; 
-        else this.state = 'HIT'; 
+        if (isInGap) {
+            this.state = 'INSIDE'; 
+        } else {
+            this.state = 'HIT'; 
+            this.recordHitAngle(centerPos);
+        }
       }
     } 
     else if (this.state === 'INSIDE') {
       if (distToCenter >= currentRadius) {
-        if (isInGap) this.state = 'ESCAPED'; 
-        else this.state = 'HIT'; 
+        if (isInGap) {
+            this.state = 'ESCAPED'; 
+        } else {
+            this.state = 'HIT'; 
+            this.recordHitAngle(centerPos);
+        }
       }
     }
   }

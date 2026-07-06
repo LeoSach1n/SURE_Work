@@ -43,3 +43,5 @@ This is a completely client-side application with zero dependencies or build ste
 1. Download or clone this repository.
 2. Ensure both `index.html` and `sketch.js` are in the same directory.
 3. Open `index.html` in any modern web browser.
+
+
