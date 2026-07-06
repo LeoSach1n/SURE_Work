@@ -12,7 +12,7 @@ let V_X = 2e7;
 // Canvas Geometry & Scale
 const PX_PER_METER = 2000; 
 const CENTER_Y = 300; 
-const GUN_X = 150; 
+const GUN_X = 250; // Shifted 100px right to perfectly center the apparatus
 
 // Positions in Meters
 const PLATE_START_M = 0.10; 
@@ -25,7 +25,6 @@ const PLATE_END = GUN_X + (PLATE_END_M * PX_PER_METER);
 const SCREEN_X = GUN_X + (SCREEN_M * PX_PER_METER);
 
 function setup() {
-  // WIDENED CANVAS TO FIT THE NEW HTML CONTAINER
   let canvas = createCanvas(1050, 600);
   canvas.parent('canvas-container');
   updatePhysics();
@@ -42,9 +41,9 @@ function draw() {
     // 1. Draw Cathode Ray Tube 
     stroke(0); strokeWeight(3); noFill();
     beginShape();
-    vertex(10, CENTER_Y - 40); vertex(200, CENTER_Y - 40);
+    vertex(110, CENTER_Y - 40); vertex(300, CENTER_Y - 40);
     vertex(SCREEN_X - 60, CENTER_Y - 230); vertex(SCREEN_X - 60, CENTER_Y + 230);
-    vertex(200, CENTER_Y + 40); vertex(10, CENTER_Y + 40);
+    vertex(300, CENTER_Y + 40); vertex(110, CENTER_Y + 40);
     endShape(CLOSE);
 
     noFill();
@@ -56,46 +55,46 @@ function draw() {
     // 2. Draw Electron Gun 
     push();
     fill(10,10,10, 40); stroke(0,0,0, 150); strokeWeight(2);
-    rect(15, CENTER_Y - 35, GUN_X - 10, 70, 20); 
+    rect(115, CENTER_Y - 35, 140, 70, 20); 
     stroke(255, 255, 255, 200); strokeWeight(3);
-    line(25, CENTER_Y - 25, GUN_X - 15, CENTER_Y - 25);
+    line(125, CENTER_Y - 25, 235, CENTER_Y - 25);
     pop();
 
     push();
     stroke(255, 150, 0); strokeWeight(2); noFill();
     drawingContext.shadowBlur = 10; drawingContext.shadowColor = 'orange';
-    beginShape(); vertex(25, CENTER_Y - 15); vertex(35, CENTER_Y - 5); vertex(25, CENTER_Y + 5); vertex(35, CENTER_Y + 15); endShape();
+    beginShape(); vertex(125, CENTER_Y - 15); vertex(135, CENTER_Y - 5); vertex(125, CENTER_Y + 5); vertex(135, CENTER_Y + 15); endShape();
     pop();
 
-    push(); fill(0, 100, 255); noStroke(); rect(48, CENTER_Y - 15, 6, 30, 2); fill(0, 100, 255); textSize(14); textStyle(BOLD); textAlign(CENTER); text("C (-)", 51, CENTER_Y - 50); pop();
+    push(); fill(0, 100, 255); noStroke(); rect(148, CENTER_Y - 15, 6, 30, 2); fill(0, 100, 255); textSize(14); textStyle(BOLD); textAlign(CENTER); text("C (-)", 151, CENTER_Y - 50); pop();
     push(); stroke(220, 50, 50); strokeWeight(4); noFill(); ellipse(GUN_X, CENTER_Y, 10, 45); fill(220, 50, 50); noStroke(); textSize(14); textStyle(BOLD); textAlign(CENTER); text("A (+)", GUN_X, CENTER_Y - 50); pop();
 
     fill(255); textSize(15); textStyle(BOLD); textAlign(CENTER);
-    text("ELECTRON GUN", 95, CENTER_Y - 85);
+    text("ELECTRON GUN", 195, CENTER_Y - 85);
 
     // HIGH VOLTAGE CIRCUIT 
     push();
     stroke(80); strokeWeight(2); noFill();
     
-    line(51, CENTER_Y + 15, 51, CENTER_Y + 120); 
-    line(51, CENTER_Y + 120, 85, CENTER_Y + 120);
+    line(151, CENTER_Y + 15, 151, CENTER_Y + 120); 
+    line(151, CENTER_Y + 120, 185, CENTER_Y + 120);
     
     line(GUN_X, CENTER_Y + 22, GUN_X, CENTER_Y + 120);
-    line(GUN_X, CENTER_Y + 120, 115, CENTER_Y + 120);
+    line(GUN_X, CENTER_Y + 120, 215, CENTER_Y + 120);
 
     stroke(0); strokeCap(SQUARE);
-    strokeWeight(4); line(85, CENTER_Y + 110, 85, CENTER_Y + 130); 
-    strokeWeight(2); line(95, CENTER_Y + 105, 95, CENTER_Y + 135); 
-    strokeWeight(4); line(105, CENTER_Y + 110, 105, CENTER_Y + 130); 
-    strokeWeight(2); line(115, CENTER_Y + 105, 115, CENTER_Y + 135); 
+    strokeWeight(4); line(185, CENTER_Y + 110, 185, CENTER_Y + 130); 
+    strokeWeight(2); line(195, CENTER_Y + 105, 195, CENTER_Y + 135); 
+    strokeWeight(4); line(205, CENTER_Y + 110, 205, CENTER_Y + 130); 
+    strokeWeight(2); line(215, CENTER_Y + 105, 215, CENTER_Y + 135); 
     
     strokeWeight(2);
-    line(85, CENTER_Y + 120, 115, CENTER_Y + 120);
+    line(185, CENTER_Y + 120, 215, CENTER_Y + 120);
 
     fill(0, 100, 255); noStroke(); textSize(18); textStyle(BOLD); textAlign(CENTER);
-    text("-", 72, CENTER_Y + 135);
+    text("-", 172, CENTER_Y + 135);
     fill(220, 50, 50);
-    text("+", 128, CENTER_Y + 135);
+    text("+", 228, CENTER_Y + 135);
     pop();
 
     // 3. Central Axis
@@ -205,7 +204,7 @@ function draw() {
     text(`Deflection (y): ${deflectionY_cm.toFixed(2)} cm`, cx - 310, cy - 190);
   }
 
-  // SHARED DOM UPDATES (Fixes the flashing race condition)
+  // SHARED DOM UPDATES
   if(document.getElementById('readY')) {
     document.getElementById('readY').innerText = Math.abs(deflectionY_cm).toFixed(2) + ' cm';
   }

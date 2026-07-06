@@ -200,4 +200,16 @@ input[type=number] {
     text-align: center; /* Centers the typed data */
     border: 1px solid #ced4da;
     border-radius: 4px;
+
+    /* Canvas Container */
+#canvas-container canvas {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    box-shadow: inset 0px 0px 10px rgba(0,0,0,0.05);
+    max-width: 100%; /* Ensures the canvas scales dynamically to prevent border clipping */
+    height: auto;    /* Maintains aspect ratio during scaling */
+    display: block;
+    margin: 0 auto;
+}
+
 }
