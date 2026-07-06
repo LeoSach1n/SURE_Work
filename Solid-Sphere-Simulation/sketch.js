@@ -72,19 +72,24 @@ function draw() {
     push();
     drawingContext.shadowBlur = 15;
     drawingContext.shadowColor = 'rgba(0,0,0,0.3)';
-    fill('#4a90e2'); 
-    stroke('#0d47a1');
-    strokeWeight(2);
+    
+    // Calculate a gradient radius that covers the specific shape properly
+    let gradRadius = TARGET_RADIUS;
+    if (currentTargetShape === 'square') gradRadius = TARGET_RADIUS * 1.4;
+    if (currentTargetShape === 'triangle') gradRadius = TARGET_RADIUS * 1.2;
+
+    // Create a universal 3D radial gradient for ALL shapes
+    let gradient = drawingContext.createRadialGradient(
+      SCREEN_CENTER.x - 20, SCREEN_CENTER.y - 20, 5, 
+      SCREEN_CENTER.x, SCREEN_CENTER.y, gradRadius
+    );
+    gradient.addColorStop(0, '#8ab4f8'); // Highlight
+    gradient.addColorStop(1, '#0d47a1'); // Deep shadow
+    
+    drawingContext.fillStyle = gradient;
+    noStroke(); // Remove outlines to match the smooth 3D aesthetic
 
     if (currentTargetShape === 'sphere') {
-      let gradient = drawingContext.createRadialGradient(
-        SCREEN_CENTER.x - 20, SCREEN_CENTER.y - 20, 5, 
-        SCREEN_CENTER.x, SCREEN_CENTER.y, TARGET_RADIUS
-      );
-      gradient.addColorStop(0, '#8ab4f8'); 
-      gradient.addColorStop(1, '#0d47a1'); 
-      drawingContext.fillStyle = gradient;
-      noStroke();
       circle(SCREEN_CENTER.x, SCREEN_CENTER.y, TARGET_RADIUS * 2); 
     } 
     else if (currentTargetShape === 'square') {
@@ -92,7 +97,6 @@ function draw() {
       rect(SCREEN_CENTER.x, SCREEN_CENTER.y, TARGET_RADIUS * 2, TARGET_RADIUS * 2, 8);
     } 
     else if (currentTargetShape === 'triangle') {
-      strokeJoin(ROUND);
       triangle(triV1.x, triV1.y, triV2.x, triV2.y, triV3.x, triV3.y);
     }
     pop();
@@ -239,7 +243,13 @@ function toggleHideTarget() {
 
   if (isTargetHidden) {
     let shapes = ['sphere', 'square', 'triangle'];
-    currentTargetShape = random(shapes);
+    let previousShape = currentTargetShape;
+    
+    // Force the engine to pick a completely new shape
+    while (currentTargetShape === previousShape) {
+        currentTargetShape = random(shapes);
+    }
+    
     clearExperiment(); 
     
     btn.innerHTML = "🛑 GIVE UP & REVEAL";
@@ -423,8 +433,8 @@ class Projectile {
   }
 
   update(centerPos) {
-    // SUB-STEPPING: Slice the velocity into 3 micro-frames per frame to completely prevent tunneling
-    let steps = 3;
+    // SUB-STEPPING: Slice the velocity into 4 micro-frames per frame to completely prevent tunneling
+    let steps = 4;
     let subVel = p5.Vector.div(this.vel, steps);
 
     for(let s = 0; s < steps; s++) {

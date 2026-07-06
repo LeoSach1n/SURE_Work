@@ -200,6 +200,7 @@ input[type=number] {
     text-align: center; /* Centers the typed data */
     border: 1px solid #ced4da;
     border-radius: 4px;
+}
 /* --- Modern Toggle Switch Styles --- */
 .switch {
   position: relative;
