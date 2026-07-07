@@ -279,6 +279,27 @@ function fireNewProjectile() {
   document.getElementById('statFired').innerText = statFired;
 }
 
+function fireNewProjectile() {
+  let velocity = document.getElementById('velocitySlider').value;
+  projectiles.push(new Projectile(45, boxY, parseFloat(velocity)));
+  
+  statFired++;
+  document.getElementById('statFired').innerText = statFired;
+}
+
+function fireBurst() {
+  let velocity = document.getElementById('velocitySlider').value;
+  
+  for (let i = 0; i < 20; i++) {
+    // Add a random vertical spread (-30 to 30) so they hit varying angles
+    let spreadY = boxY + random(-30, 30);
+    projectiles.push(new Projectile(45, spreadY, parseFloat(velocity)));
+  }
+  
+  statFired += 20;
+  document.getElementById('statFired').innerText = statFired;
+}
+
 function clearExperiment() {
   projectiles = [];
   hitMarks = [];
