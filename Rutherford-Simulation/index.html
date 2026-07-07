@@ -36,7 +36,7 @@
                 </div>
 
                 <label>Detector Radius</label>
-                <input type="range" id="radiusSlider" min="120" max="280" value="220">
+                <input type="range" id="radiusSlider" min="160" max="280" value="220">
 
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #0056b3; font-weight: bold; margin-top:10px;">
                     <input type="checkbox" id="singleNucleusToggle" style="width: 18px; height: 18px;"> 
@@ -52,17 +52,20 @@
             <div class="panel-section">
                 <h3>2. Beam Controls</h3>
                 <label>Alpha Particle Energy</label>
-                <input type="range" id="energySlider" min="2" max="25" value="11">
+                <input type="range" id="energySlider" min="25" max="50" value="32">
                 
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button id="fireBtn" class="action-btn" onclick="fireNewParticle()">SINGLE</button>
                     <button id="burstBtn" class="action-btn burst" onclick="fireBurst()">BURST</button>
                 </div>
                 
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #dc3545; font-weight: bold; margin-top:10px; padding: 5px; background: #ffeeba; border-radius: 5px; border: 1px solid #ffdf7e;">
-                    <input type="checkbox" id="continuousBeamToggle" style="width: 18px; height: 18px;" onchange="toggleContinuousBeam()"> 
-                    Continuous Beam Mode
-                </label>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 15px; padding: 10px 15px; background-color: #ffeeba; border: 1px solid #ffdf7e; border-radius: 6px;">
+                    <span style="font-size: 14px; font-weight: bold; color: #dc3545;">Continuous Beam Mode</span>
+                    <label class="switch">
+                        <input type="checkbox" id="continuousBeamToggle" onchange="toggleContinuousBeam()">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
 
                 <button class="action-btn clear" onclick="clearExperiment()">CLEAR DATA & SCREEN</button>
             </div>

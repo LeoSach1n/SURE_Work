@@ -5,7 +5,7 @@ let SCREEN_CENTER;
 let nucleiPositions = []; 
 let particles = [];
 let hitMarks = []; 
-const SIMULATION_K = 45; 
+const SIMULATION_K = 179.8; 
 
 // Data Tracking Variables
 let statFired = 0;
@@ -159,6 +159,15 @@ function setElement(z, btnElement) {
   let buttons = document.getElementsByClassName('element-tile');
   for (let b of buttons) { b.classList.remove('active'); }
   btnElement.classList.add('active');
+
+  // Auto-adjust energy slider based on the chosen element
+  let eSlider = document.getElementById('energySlider');
+  if (eSlider) {
+    if (z === 13) eSlider.value = 25;      // Al: Minimum
+    else if (z === 29) eSlider.value = 31; // Cu: ~25% 
+    else if (z === 47) eSlider.value = 38; // Ag: ~50%
+    else if (z === 79) eSlider.value = 50; // Au: Maximum
+  }
 
   logEvent('CHANGED_ELEMENT'); 
 }
