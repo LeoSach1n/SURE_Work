@@ -16,13 +16,13 @@ const ALPHA_CHARGE = 2;
 
 // Z-> Properties 
 const ELEMENT_DATA = {
+  13: { symbol: 'Al', name: 'Aluminum', color: [170, 170, 180], radius: 25 },
   79: { symbol: 'Au', name: 'Gold', color: [255, 215, 0], radius: 60 },
   47: { symbol: 'Ag', name: 'Silver', color: [210, 210, 210], radius: 45 },
-  29: { symbol: 'Cu', name: 'Copper', color: [184, 115, 51], radius: 35 },
-  13: { symbol: 'Al', name: 'Aluminum', color: [170, 170, 180], radius: 25 }
+  29: { symbol: 'Cu', name: 'Copper', color: [184, 115, 51], radius: 35 }
 };
 
-let currentTargetZ = 79; 
+let currentTargetZ = 13; 
 const BOX_Y = 300; 
 
 function setup() {
@@ -164,9 +164,19 @@ function setElement(z, btnElement) {
   let eSlider = document.getElementById('energySlider');
   if (eSlider) {
     if (z === 13) eSlider.value = 25;      // Al: Minimum
-    else if (z === 29) eSlider.value = 31; // Cu: ~25% 
-    else if (z === 47) eSlider.value = 38; // Ag: ~50%
-    else if (z === 79) eSlider.value = 50; // Au: Maximum
+    else if (z === 29) eSlider.value = 38; // Cu: ~25% 
+    else if (z === 47) eSlider.value = 45; // Ag: ~50%
+    else if (z === 79) eSlider.value = 60; // Au: Maximum
+  }
+
+  // Auto-adjust screen radius based on the chosen element
+  let rSlider = document.getElementById('radiusSlider');
+  if (rSlider) {
+    if (z === 79 || z === 47) {
+      rSlider.value = 265; // Push to max for Au and Ag
+    } else {
+      rSlider.value = 220; // Reset to default for Cu and Al
+    }
   }
 
   logEvent('CHANGED_ELEMENT'); 
@@ -297,26 +307,45 @@ class AlphaParticle {
   }
 }
 
+// --- NEW CACHING VARIABLES ---
+let fieldCache;
+let lastFieldZ = -1;
+let lastNucleiCount = -1;
+
 function drawElectricFields(targetData, zValue, activeNuclei) {
   let showField = document.getElementById('fieldToggle').checked;
   if (!showField) return; 
 
-  push();
-  noFill();
-  
-  let maxFieldReach = zValue * 3; 
-  
-  for (let pos of activeNuclei) {
-    for (let r = 15; r < maxFieldReach; r += 20) {
-      let opacity = map(r, 10, maxFieldReach, 80, 0); 
-      
-      stroke(targetData.color[0], targetData.color[1], targetData.color[2], opacity);
-      strokeWeight(1);
-      
-      circle(pos.x, pos.y, r * 2);
-    }
+  // Initialize the off-screen graphics buffer once
+  if (!fieldCache) {
+    fieldCache = createGraphics(width, height);
   }
-  pop();
+
+  // Only re-draw the math if the Element (Z) or the Nuclei Count (Single/Multi) changes
+  if (zValue !== lastFieldZ || activeNuclei.length !== lastNucleiCount) {
+    fieldCache.clear(); // Wipe the old buffer clean
+    fieldCache.noFill();
+    
+    let maxFieldReach = zValue * 3; 
+    
+    for (let pos of activeNuclei) {
+      for (let r = 15; r < maxFieldReach; r += 20) {
+        let opacity = map(r, 10, maxFieldReach, 80, 0); 
+        
+        fieldCache.stroke(targetData.color[0], targetData.color[1], targetData.color[2], opacity);
+        fieldCache.strokeWeight(1);
+        
+        fieldCache.circle(pos.x, pos.y, r * 2);
+      }
+    }
+    
+    // Update trackers so it doesn't run this math again until the user changes settings
+    lastFieldZ = zValue;
+    lastNucleiCount = activeNuclei.length;
+  }
+
+  // Blit (stamp) the pre-rendered transparent image onto the main canvas
+  image(fieldCache, 0, 0);
 }
 
 function logEvent(eventName) {

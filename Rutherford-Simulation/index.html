@@ -17,7 +17,7 @@
                 
                 <label>Target Nucleus</label>
                 <div class="periodic-table">
-                    <button class="element-tile active" onclick="setElement(79, this)">
+                    <button class="element-tile" onclick="setElement(79, this)">
                         <span class="atomic-num">79</span>
                         <span class="symbol">Au</span>
                     </button>
@@ -29,7 +29,7 @@
                         <span class="atomic-num">29</span>
                         <span class="symbol">Cu</span>
                     </button>
-                    <button class="element-tile" onclick="setElement(13, this)">
+                    <button class="element-tile active" onclick="setElement(13, this)">
                         <span class="atomic-num">13</span>
                         <span class="symbol">Al</span>
                     </button>
@@ -44,7 +44,7 @@
                 </label>
 
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #0056b3; font-weight: bold; margin-top:10px;">
-                    <input type="checkbox" id="fieldToggle" checked style="width: 18px; height: 18px;"> 
+                    <input type="checkbox" id="fieldToggle" style="width: 18px; height: 18px;"> 
                     Show Electric Field
                 </label>
             </div>
@@ -52,7 +52,7 @@
             <div class="panel-section">
                 <h3>2. Beam Controls</h3>
                 <label>Alpha Particle Energy</label>
-                <input type="range" id="energySlider" min="25" max="50" value="32">
+                <input type="range" id="energySlider" min="25" max="60" value="25">
                 
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button id="fireBtn" class="action-btn" onclick="fireNewParticle()">SINGLE</button>
