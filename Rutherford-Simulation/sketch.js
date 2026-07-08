@@ -6,9 +6,9 @@ let nucleiPositions = [];
 let particles = [];
 const SIMULATION_K = 179.8; 
 
-// NEW: Histogram Tracking
+// Histogram Tracking
 let histogramBins = [];
-const TOTAL_BINS = 180; // Divides the screen into 2-degree sectors
+const TOTAL_BINS = 180; 
 let histogramCache;
 let needsHistogramUpdate = false;
 
@@ -41,9 +41,17 @@ function setup() {
     nucleiPositions.push(createVector(SCREEN_CENTER.x, SCREEN_CENTER.y + (i * spacing)));
   }
 
-  // Initialize all angular bins to 0
   for (let i = 0; i < TOTAL_BINS; i++) {
     histogramBins[i] = 0;
+  }
+}
+
+// Helper function to return constant radius based on selected element
+function getCurrentRadius() {
+  if (currentTargetZ === 79 || currentTargetZ === 47) {
+    return 265; // Constant value for Au and Ag
+  } else {
+    return 220; // Constant value for Al and Cu
   }
 }
 
@@ -66,7 +74,7 @@ function draw() {
   drawElectricFields(targetData, currentTargetZ, activeNuclei);
 
   // 1. Draw the Detector Screen Base Ring
-  let currentRadius = parseFloat(document.getElementById('radiusSlider').value);
+  let currentRadius = getCurrentRadius();
   let gapCenterRad = PI; 
   let gapHalfRad = radians(12); 
 
@@ -132,14 +140,13 @@ function draw() {
     p.show();
 
     if (p.state === 'HIT') {
-      // Calculate collision angle to find the correct histogram bin
       let hitAngle = atan2(p.pos.y - SCREEN_CENTER.y, p.pos.x - SCREEN_CENTER.x);
       if (hitAngle < 0) hitAngle += TWO_PI;
       
       let binIndex = floor(map(hitAngle, 0, TWO_PI, 0, TOTAL_BINS));
       if (binIndex >= 0 && binIndex < TOTAL_BINS) {
         histogramBins[binIndex]++;
-        needsHistogramUpdate = true; // Tell the offscreen buffer to re-render
+        needsHistogramUpdate = true; 
       }
 
       statHits++;
@@ -157,13 +164,12 @@ function draw() {
   }
 }
 
-// --- NEW HIGH-PERFORMANCE HISTOGRAM GRAPHICS OVERLAY ---
+// --- HIGH-PERFORMANCE HISTOGRAM GRAPHICS OVERLAY ---
 function drawHistogram(radius) {
   if (!histogramCache) {
     histogramCache = createGraphics(width, height);
   }
 
-  // Only run layout math when data changes to maintain a high FPS
   if (needsHistogramUpdate || frameCount === 1) {
     histogramCache.clear();
     histogramCache.push();
@@ -176,19 +182,15 @@ function drawHistogram(radius) {
       if (histogramBins[i] === 0) continue;
 
       let angle = i * angularWidth;
-      
-      // Scale bar height dynamically, caps at 35px high so it doesn't leave the view
       let barHeight = map(histogramBins[i], 0, maxBinValue, 2, 35);
 
       histogramCache.push();
       histogramCache.rotate(angle + angularWidth / 2);
       
-      // Solid bright red data color matching standard scattering chart designs
       histogramCache.fill(220, 53, 69, 200);
       histogramCache.stroke(180, 20, 30);
       histogramCache.strokeWeight(1);
       
-      // Draws a bar pointing outward directly on the surface edge
       histogramCache.rect(radius, -2, barHeight, 4, 1);
       histogramCache.pop();
     }
@@ -214,14 +216,9 @@ function setElement(z, btnElement) {
     else if (z === 79) eSlider.value = 60; 
   }
 
-  let rSlider = document.getElementById('radiusSlider');
-  if (rSlider) {
-    if (z === 79 || z === 47) {
-      rSlider.value = 265; 
-    } else {
-      rSlider.value = 220; 
-    }
-  }
+  // Force histogram buffer to recalculate when screen radius shifts between elements
+  needsHistogramUpdate = true;
+  
   logEvent('CHANGED_ELEMENT'); 
 }
 
@@ -253,7 +250,6 @@ function clearExperiment() {
   particles = [];
   statFired = 0; statHits = 0; statEscaped = 0;
   
-  // Wipe histogram data arrays clear
   for (let i = 0; i < TOTAL_BINS; i++) {
     histogramBins[i] = 0;
   }
@@ -294,15 +290,14 @@ class AlphaParticle {
   }
 
   update(centerPos) {
-    this.vel.add(this.acc); {
-  this.pos.add(this.vel);
-  this.acc.mult(0);
-}
+    this.vel.add(this.acc); 
+    this.pos.add(this.vel);
+    this.acc.mult(0);
 
     this.history.push(createVector(this.pos.x, this.pos.y));
     if (this.history.length > 50) this.history.splice(0, 1);
 
-    let currentRadius = parseFloat(document.getElementById('radiusSlider').value);
+    let currentRadius = getCurrentRadius();
     let distToCenter = p5.Vector.dist(this.pos, centerPos); 
     
     let angle = atan2(this.pos.y - centerPos.y, this.pos.x - centerPos.x); 
