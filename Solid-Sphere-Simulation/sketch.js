@@ -44,12 +44,20 @@ function draw() {
 
   // --- CONTINUOUS FIRE LOGIC ---
   let isContinuousFire = document.getElementById('continuousFireToggle').checked;
-  if (isContinuousFire && frameCount % 12 === 0) { 
+  if (isContinuousFire && frameCount % 8 === 0) { 
     let velocity = document.getElementById('velocitySlider').value;
-    projectiles.push(new Projectile(45, boxY, parseFloat(velocity)));
+    projectiles.push(new Projectile(45, boxY + random(-30, 30), parseFloat(velocity)));
     statFired++;
     document.getElementById('statFired').innerText = statFired;
   }
+
+  // if (isContinuousBeam && frameCount % 9 === 0) {
+  //   let energy = document.getElementById('energySlider').value;
+  //   // Slightly tighter spread for continuous beam to look like a steady stream
+  //   particles.push(new AlphaParticle(45, BOX_Y + random(-30, 30), parseFloat(energy)));
+  //   statFired++;
+  //   document.getElementById('statFired').innerText = statFired;
+  // }
 
   // 1. Draw the Detector Screen
   let currentRadius = document.getElementById('radiusSlider').value;
@@ -273,7 +281,7 @@ function toggleHideTarget() {
 
 function fireNewProjectile() {
   let velocity = document.getElementById('velocitySlider').value;
-  projectiles.push(new Projectile(45, boxY, parseFloat(velocity)));
+  projectiles.push(new Projectile(45, boxY + random(-30, 30), parseFloat(velocity)));
   
   statFired++;
   document.getElementById('statFired').innerText = statFired;
@@ -281,7 +289,7 @@ function fireNewProjectile() {
 
 function fireNewProjectile() {
   let velocity = document.getElementById('velocitySlider').value;
-  projectiles.push(new Projectile(45, boxY, parseFloat(velocity)));
+  projectiles.push(new Projectile(45, boxY + random(-30, 30), parseFloat(velocity)));
   
   statFired++;
   document.getElementById('statFired').innerText = statFired;
