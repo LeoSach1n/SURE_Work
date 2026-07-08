@@ -4,8 +4,13 @@ let sessionStartTime = Date.now();
 let SCREEN_CENTER;
 let nucleiPositions = []; 
 let particles = [];
-let hitMarks = []; 
 const SIMULATION_K = 179.8; 
+
+// NEW: Histogram Tracking
+let histogramBins = [];
+const TOTAL_BINS = 180; // Divides the screen into 2-degree sectors
+let histogramCache;
+let needsHistogramUpdate = false;
 
 // Data Tracking Variables
 let statFired = 0;
@@ -35,6 +40,11 @@ function setup() {
   for (let i = -2; i <= 2; i++) {
     nucleiPositions.push(createVector(SCREEN_CENTER.x, SCREEN_CENTER.y + (i * spacing)));
   }
+
+  // Initialize all angular bins to 0
+  for (let i = 0; i < TOTAL_BINS; i++) {
+    histogramBins[i] = 0;
+  }
 }
 
 function draw() {
@@ -44,11 +54,8 @@ function draw() {
   let isSingleNucleus = document.getElementById('singleNucleusToggle').checked;
   let isContinuousBeam = document.getElementById('continuousBeamToggle').checked;
   
-  // --- CONTINUOUS BEAM LOGIC ---
-  // Fires 1 particle roughly every 0.15 seconds (9 frames at 60 FPS)
   if (isContinuousBeam && frameCount % 9 === 0) {
     let energy = document.getElementById('energySlider').value;
-    // Slightly tighter spread for continuous beam to look like a steady stream
     particles.push(new AlphaParticle(45, BOX_Y + random(-30, 30), parseFloat(energy)));
     statFired++;
     document.getElementById('statFired').innerText = statFired;
@@ -58,8 +65,8 @@ function draw() {
   
   drawElectricFields(targetData, currentTargetZ, activeNuclei);
 
-  // 1. Draw the Detector Screen
-  let currentRadius = document.getElementById('radiusSlider').value;
+  // 1. Draw the Detector Screen Base Ring
+  let currentRadius = parseFloat(document.getElementById('radiusSlider').value);
   let gapCenterRad = PI; 
   let gapHalfRad = radians(12); 
 
@@ -74,7 +81,10 @@ function draw() {
   drawingContext.setLineDash([]); 
   pop();
 
-  // 2. Draw the Targets
+  // 2. Render the Optimized Histogram
+  drawHistogram(currentRadius);
+
+  // 3. Draw the Targets
   if (!isSingleNucleus) {
     push();
     rectMode(CENTER);
@@ -92,14 +102,7 @@ function draw() {
     circle(pos.x, pos.y, 8); 
   }
 
-  // 3. Draw the Scintillation Marks
-  for (let mark of hitMarks) {
-    fill(200, 0, 0); 
-    noStroke();
-    circle(mark.x, mark.y, 8);
-  }
-
-  // 4. Draw the Fixed Lead Box & Beam Animation
+  // 4. Draw Lead Firing Box
   push();
   rectMode(CENTER);
   fill(160, 160, 165); 
@@ -107,20 +110,17 @@ function draw() {
   strokeWeight(2);
   rect(30, BOX_Y, 40, 80, 5); 
   
-  // The default dark slit
   fill(30); 
   noStroke();
   rect(45, BOX_Y, 15, 8); 
 
-  // Glowing red animation when the beam is actively firing
   if (isContinuousBeam) {
-    // Math.sin creates a smooth pulsing visual effect
     let pulseAlpha = 150 + 105 * sin(frameCount * 0.2);
     fill(255, 50, 50, pulseAlpha);
     drawingContext.shadowBlur = 15;
     drawingContext.shadowColor = 'red';
     rect(45, BOX_Y, 15, 8); 
-    drawingContext.shadowBlur = 0; // reset shadow
+    drawingContext.shadowBlur = 0; 
   }
   pop();
 
@@ -132,9 +132,16 @@ function draw() {
     p.show();
 
     if (p.state === 'HIT') {
-      hitMarks.push(createVector(p.pos.x, p.pos.y));
-      if (hitMarks.length > 50) hitMarks.splice(0, 1);
+      // Calculate collision angle to find the correct histogram bin
+      let hitAngle = atan2(p.pos.y - SCREEN_CENTER.y, p.pos.x - SCREEN_CENTER.x);
+      if (hitAngle < 0) hitAngle += TWO_PI;
       
+      let binIndex = floor(map(hitAngle, 0, TWO_PI, 0, TOTAL_BINS));
+      if (binIndex >= 0 && binIndex < TOTAL_BINS) {
+        histogramBins[binIndex]++;
+        needsHistogramUpdate = true; // Tell the offscreen buffer to re-render
+      }
+
       statHits++;
       document.getElementById('statHits').innerText = statHits;
       particles.splice(i, 1); 
@@ -144,13 +151,52 @@ function draw() {
       document.getElementById('statEscaped').innerText = statEscaped;
       p.state = 'FLYING_AWAY'; 
     }
-    else if (p.state === 'BLOCKED') {
-      particles.splice(i, 1); 
-    }
     else if (p.pos.x > width + 50 || p.pos.y < -50 || p.pos.y > height + 50 || p.pos.x < -50) {
       particles.splice(i, 1);
     }
   }
+}
+
+// --- NEW HIGH-PERFORMANCE HISTOGRAM GRAPHICS OVERLAY ---
+function drawHistogram(radius) {
+  if (!histogramCache) {
+    histogramCache = createGraphics(width, height);
+  }
+
+  // Only run layout math when data changes to maintain a high FPS
+  if (needsHistogramUpdate || frameCount === 1) {
+    histogramCache.clear();
+    histogramCache.push();
+    histogramCache.translate(SCREEN_CENTER.x, SCREEN_CENTER.y);
+    
+    let angularWidth = TWO_PI / TOTAL_BINS;
+    let maxBinValue = Math.max(...histogramBins, 1);
+
+    for (let i = 0; i < TOTAL_BINS; i++) {
+      if (histogramBins[i] === 0) continue;
+
+      let angle = i * angularWidth;
+      
+      // Scale bar height dynamically, caps at 35px high so it doesn't leave the view
+      let barHeight = map(histogramBins[i], 0, maxBinValue, 2, 35);
+
+      histogramCache.push();
+      histogramCache.rotate(angle + angularWidth / 2);
+      
+      // Solid bright red data color matching standard scattering chart designs
+      histogramCache.fill(220, 53, 69, 200);
+      histogramCache.stroke(180, 20, 30);
+      histogramCache.strokeWeight(1);
+      
+      // Draws a bar pointing outward directly on the surface edge
+      histogramCache.rect(radius, -2, barHeight, 4, 1);
+      histogramCache.pop();
+    }
+    histogramCache.pop();
+    needsHistogramUpdate = false;
+  }
+
+  image(histogramCache, 0, 0);
 }
 
 // --- HTML TRIGGER FUNCTIONS ---
@@ -160,32 +206,28 @@ function setElement(z, btnElement) {
   for (let b of buttons) { b.classList.remove('active'); }
   btnElement.classList.add('active');
 
-  // Auto-adjust energy slider based on the chosen element
   let eSlider = document.getElementById('energySlider');
   if (eSlider) {
-    if (z === 13) eSlider.value = 25;      // Al: Minimum
-    else if (z === 29) eSlider.value = 38; // Cu: ~25% 
-    else if (z === 47) eSlider.value = 45; // Ag: ~50%
-    else if (z === 79) eSlider.value = 60; // Au: Maximum
+    if (z === 13) eSlider.value = 25;      
+    else if (z === 29) eSlider.value = 38; 
+    else if (z === 47) eSlider.value = 45; 
+    else if (z === 79) eSlider.value = 60; 
   }
 
-  // Auto-adjust screen radius based on the chosen element
   let rSlider = document.getElementById('radiusSlider');
   if (rSlider) {
     if (z === 79 || z === 47) {
-      rSlider.value = 265; // Push to max for Au and Ag
+      rSlider.value = 265; 
     } else {
-      rSlider.value = 220; // Reset to default for Cu and Al
+      rSlider.value = 220; 
     }
   }
-
   logEvent('CHANGED_ELEMENT'); 
 }
 
 function fireNewParticle() {
   let energy = document.getElementById('energySlider').value;
   particles.push(new AlphaParticle(45, BOX_Y + random(-25, 25), parseFloat(energy)));
-  
   statFired++;
   document.getElementById('statFired').innerText = statFired;
   logEvent('FIRED_SINGLE'); 
@@ -197,7 +239,6 @@ function fireBurst() {
     let spreadY = BOX_Y + random(-25, 25);
     particles.push(new AlphaParticle(45, spreadY, parseFloat(energy)));
   }
-  
   statFired += 20;
   document.getElementById('statFired').innerText = statFired;
   logEvent('FIRED_BURST'); 
@@ -210,8 +251,14 @@ function toggleContinuousBeam() {
 
 function clearExperiment() {
   particles = [];
-  hitMarks = [];
   statFired = 0; statHits = 0; statEscaped = 0;
+  
+  // Wipe histogram data arrays clear
+  for (let i = 0; i < TOTAL_BINS; i++) {
+    histogramBins[i] = 0;
+  }
+  if (histogramCache) histogramCache.clear();
+  
   document.getElementById('statFired').innerText = 0;
   document.getElementById('statHits').innerText = 0;
   document.getElementById('statEscaped').innerText = 0;
@@ -237,7 +284,6 @@ class AlphaParticle {
       distance = constrain(distance, physicsRadius, 1000); 
 
       let forceMagnitude = (SIMULATION_K * ALPHA_CHARGE * targetZ) / (distance * distance);
-      
       if (!isSingle) {
         forceMagnitude *= 0.4; 
       }
@@ -248,14 +294,15 @@ class AlphaParticle {
   }
 
   update(centerPos) {
-    this.vel.add(this.acc); 
-    this.pos.add(this.vel); 
-    this.acc.mult(0); 
+    this.vel.add(this.acc); {
+  this.pos.add(this.vel);
+  this.acc.mult(0);
+}
 
     this.history.push(createVector(this.pos.x, this.pos.y));
     if (this.history.length > 50) this.history.splice(0, 1);
 
-    let currentRadius = document.getElementById('radiusSlider').value;
+    let currentRadius = parseFloat(document.getElementById('radiusSlider').value);
     let distToCenter = p5.Vector.dist(this.pos, centerPos); 
     
     let angle = atan2(this.pos.y - centerPos.y, this.pos.x - centerPos.x); 
@@ -307,7 +354,6 @@ class AlphaParticle {
   }
 }
 
-// --- NEW CACHING VARIABLES ---
 let fieldCache;
 let lastFieldZ = -1;
 let lastNucleiCount = -1;
@@ -316,14 +362,12 @@ function drawElectricFields(targetData, zValue, activeNuclei) {
   let showField = document.getElementById('fieldToggle').checked;
   if (!showField) return; 
 
-  // Initialize the off-screen graphics buffer once
   if (!fieldCache) {
     fieldCache = createGraphics(width, height);
   }
 
-  // Only re-draw the math if the Element (Z) or the Nuclei Count (Single/Multi) changes
   if (zValue !== lastFieldZ || activeNuclei.length !== lastNucleiCount) {
-    fieldCache.clear(); // Wipe the old buffer clean
+    fieldCache.clear(); 
     fieldCache.noFill();
     
     let maxFieldReach = zValue * 3; 
@@ -338,13 +382,9 @@ function drawElectricFields(targetData, zValue, activeNuclei) {
         fieldCache.circle(pos.x, pos.y, r * 2);
       }
     }
-    
-    // Update trackers so it doesn't run this math again until the user changes settings
     lastFieldZ = zValue;
     lastNucleiCount = activeNuclei.length;
   }
-
-  // Blit (stamp) the pre-rendered transparent image onto the main canvas
   image(fieldCache, 0, 0);
 }
 
@@ -358,18 +398,8 @@ function logEvent(eventName) {
     timestamp: new Date().toISOString(),
     timeSinceStartMs: Date.now() - sessionStartTime,
     action: eventName,
-    labState: {
-      targetZ: currentZ,
-      beamEnergy: parseInt(currentEnergy),
-      isSingleNucleus: isSingleMode
-    },
-    currentStats: {
-      fired: statFired,
-      hits: statHits,
-      escaped: statEscaped
-    }
+    labState: { targetZ: currentZ, beamEnergy: parseInt(currentEnergy), isSingleNucleus: isSingleMode },
+    currentStats: { fired: statFired, hits: statHits, escaped: statEscaped }
   };
-
   sessionLog.push(eventPayload);
-  console.log("Telemetry Logged:", eventPayload); 
 }
