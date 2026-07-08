@@ -7,7 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* --- Modern UI Toggle Switch --- */
+        
         .switch input { 
             opacity: 0; 
             width: 0; 
@@ -37,8 +37,8 @@
                 <h3>1. Apparatus Setup</h3>
                 
                 <div id="shapeSelectorContainer">
-                    <label id="shapeLabel">Target Object Shape</label>
-                    <div class="periodic-table" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <label id="shapeLabel" style="display: block; margin-bottom: 10px; font-size: 14px; font-weight: bold; color: #495057;">Target Object Shape</label>
+                    <div class="periodic-table" style="grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
                         <button class="element-tile active" data-shape="sphere" onclick="handleShapeSelection('sphere', this)">
                             <span class="symbol" style="font-size: 16px;">⚫</span>
                             <span class="atomic-num" style="text-align: center; margin-top: 5px;">Sphere</span>
@@ -57,22 +57,12 @@
                 <button id="hideToggleBtn" class="action-btn" onclick="toggleHideTarget()" style="margin-top: 15px; background-color: #6c757d; font-size: 13px;">
                     🙈 HIDE TARGET & GUESS
                 </button>
-
-                <label style="margin-top: 15px;">Screen Radius</label>
-                <input type="range" id="radiusSlider" min="150" max="280" value="220" style="cursor: pointer;">
             </div>
 
             <div class="panel-section">
                 <h3>2. Projectile Controls</h3>
                 
-                <p style="font-size: 13px; color: #0056b3; font-weight: bold; background: #e9ecef; padding: 8px; border-radius: 5px; margin: 0 0 10px 0; text-align: center;">
-                    🖱️ Drag the grey box to aim!
-                </p>
-
-                <label style="margin-top: 10px;">Firing Velocity</label>
-                <input type="range" id="velocitySlider" min="2" max="20" value="10" style="cursor: pointer;">
-                
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button id="fireBtn" class="action-btn" onclick="fireNewProjectile()" style="padding: 12px; font-size: 14px;">
                         🎯 SINGLE
                     </button>
@@ -81,12 +71,11 @@
                     </button>
                 </div>
 
-                <!-- Modern Toggle Switch Container -->
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 15px; padding: 10px 15px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px;">
                     <span style="font-size: 14px; font-weight: bold; color: #495057;">Continuous Firing</span>
                     <label class="switch">
                         <input type="checkbox" id="continuousFireToggle">
-                        <span class="slider"></span>
+                        <span class="slider round"></span>
                     </label>
                 </div>
                 
@@ -97,20 +86,35 @@
         <div class="right-column">
             <div id="canvas-container"></div>
             
-            <div class="panel-section data-readout" style="padding: 15px;">
-                <p style="font-size: 14px;">Fired: <span id="statFired" class="stat-num">0</span></p>
-                <p style="font-size: 14px;">Hits: <span id="statHits" class="stat-num">0</span></p>
-                <p style="font-size: 14px;">Escaped: <span id="statEscaped" class="stat-num">0</span></p>
-                <p style="font-size: 14px; color: #dc3545;">Impact Angle: <span id="statAngle" class="stat-num" style="color: #dc3545;">---°</span></p>
+            <div class="panel-section data-readout" style="padding: 15px 20px; display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
+                <div style="flex: 1;">
+                    <h4 style="margin: 0 0 10px 0; color: #0056b3; font-size: 14px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Scattering Angles</h4>
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+                        <p style="font-size: 12px; margin: 0; display: flex; flex-direction: column; align-items: center; font-weight: bold; color: #495057;">G1 <span id="angle0" class="stat-num" style="color: #dc3545; margin-top: 5px; font-size: 14px; padding: 4px 8px;">---°</span></p>
+                        <p style="font-size: 12px; margin: 0; display: flex; flex-direction: column; align-items: center; font-weight: bold; color: #495057;">G2 <span id="angle1" class="stat-num" style="color: #dc3545; margin-top: 5px; font-size: 14px; padding: 4px 8px;">---°</span></p>
+                        <p style="font-size: 12px; margin: 0; display: flex; flex-direction: column; align-items: center; font-weight: bold; color: #495057;">G3 <span id="angle2" class="stat-num" style="color: #dc3545; margin-top: 5px; font-size: 14px; padding: 4px 8px;">---°</span></p>
+                        <p style="font-size: 12px; margin: 0; display: flex; flex-direction: column; align-items: center; font-weight: bold; color: #495057;">G4 <span id="angle3" class="stat-num" style="color: #dc3545; margin-top: 5px; font-size: 14px; padding: 4px 8px;">---°</span></p>
+                        <p style="font-size: 12px; margin: 0; display: flex; flex-direction: column; align-items: center; font-weight: bold; color: #495057;">G5 <span id="angle4" class="stat-num" style="color: #dc3545; margin-top: 5px; font-size: 14px; padding: 4px 8px;">---°</span></p>
+                    </div>
+                </div>
+                
+                <div style="margin-left: 20px; border-left: 1px solid #ccc; padding-left: 20px; display: flex; align-items: center; gap: 10px;">
+                    <button class="action-btn" onclick="exportCSV()" style="background-color: #28a745; padding: 10px 15px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); white-space: nowrap;">
+                        📥 EXPORT CSV
+                    </button>
+                    <button class="action-btn" onclick="endSession()" style="background-color: #dc3545; padding: 10px 15px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); white-space: nowrap;">
+                        🛑 END SESSION
+                    </button>
+                </div>
             </div>
 
             <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 20px; font-size: 13px; color: #856404; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.05);">
                 <strong>ℹ️ Instructions:</strong>
-                <span>1. Drag the grey box to aim.</span>
+                <span>1. Select a Shape.</span>
                 <span style="color: #d39e00;">|</span>
                 <span>2. Fire projectiles to map the target's surface.</span>
                 <span style="color: #d39e00;">|</span>
-                <span>3. Hide the target and guess the shape!</span>
+                <span>3. Export telemetry data to analyze angles!</span>
             </div>
         </div>
     </div>
