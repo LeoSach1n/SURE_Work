@@ -66,16 +66,19 @@
         .thumbnail {
             width: 100%;
             height: 250px;
-            background-color: rgba(0,0,0,0.05); /* Changed to white to blend nicely */
-            object-fit: contain; /* This prevents the image from cropping */
+            background-color: rgba(0,0,0,0.05); 
+            object-fit: contain; 
             border-bottom: 1px rgba(0,0,0,0.05);
-            padding: 10px; /* Adds a clean inner margin around the image */
+            padding: 10px; 
             box-sizing: border-box;
         }
 
         .card-content {
             padding: 25px 20px; 
             text-align: center; 
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
         }
 
         .card-content h2 {
@@ -91,6 +94,15 @@
             line-height: 1.5;
         }
 
+        /* New Credential Styling */
+        .credential {
+            margin-top: auto; /* Pushes the text to the bottom of the card */
+            padding-top: 15px;
+            font-size: 12px;
+            color: #868e96;
+            font-style: italic;
+        }
+
         /* Responsive design for smaller screens */
         @media (max-width: 768px) {
             .grid-container {
@@ -103,7 +115,7 @@
 
     <div class="header">
         <h1>Virtual Physics Laboratory</h1>
-        <p> A suite of four interactive, real-time physics simulations built entirely on the client side using JavaScript and p5.js. Designed to bridge the gap between theoretical mathematics and visual learning</p>
+        <p>A suite of four interactive, real-time physics simulations built entirely on the client side using JavaScript and p5.js. Designed to bridge the gap between theoretical mathematics and visual learning.</p>
     </div>
 
     <div class="grid-container">
@@ -113,6 +125,7 @@
             <div class="card-content">
                 <h2>Rutherford Alpha Scattering</h2>
                 <p>Explore Coulomb's Law of electrostatic repulsion by firing alpha particles at heavy atomic nuclei.</p>
+                <span class="credential">Made by Sachin Tripathi , VNRVJIET , Batch of 28'</span>
             </div>
         </a>
 
@@ -121,6 +134,7 @@
             <div class="card-content">
                 <h2>J.J. Thomson Cathode Ray Tube</h2>
                 <p>Calculate the e/m ratio by balancing perpendicular electric and magnetic fields to deflect an electron beam.</p>
+                <span class="credential">Made by Sachin Tripathi , VNRVJIET , Batch of 28'</span>
             </div>
         </a>
 
@@ -129,6 +143,7 @@
             <div class="card-content">
                 <h2>Millikan Oil Drop Experiment</h2>
                 <p>Determine the fundamental charge of an electron by isolating drag, gravity, and electric forces on floating droplets.</p>
+                <span class="credential">Made by Sachin Tripathi , VNRVJIET , Batch of 28'</span>
             </div>
         </a>
 
@@ -137,6 +152,7 @@
             <div class="card-content">
                 <h2>Solid Scattering</h2>
                 <p>Deduce hidden solid shapes using rigid-body elastic collision reflections and cartesian impact angles.</p>
+                <span class="credential">Made by Sachin Tripathi , VNRVJIET , Batch of 28'</span>
             </div>
         </a>
 
