@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magnetic Spectrometer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <div class="control-panel">
+            <h2>Magnetic Spectrometer</h2>
+
+            <div class="panel-section">
+                <h3>1. Particle Kinematics</h3>
+                
+                <label style="margin-top: 10px; font-weight: bold; color: #495057;">Total Momentum (GeV/c)</label>
+                <input type="range" id="momentumSlider" min="0.5" max="6.0" step="0.1" value="3.0" style="cursor: pointer;" oninput="updatePreview()">
+                <div style="text-align: right; font-size: 12px; color: #6c757d;" id="momReadout">3.0 GeV/c</div>
+                
+                <label style="margin-top: 10px; font-weight: bold; color: #495057;">Emission Angle (Degrees)</label>
+                <input type="range" id="angleSlider" min="5" max="90" value="45" style="cursor: pointer;" oninput="updatePreview()">
+                <div style="text-align: right; font-size: 12px; color: #6c757d;" id="angReadout">45°</div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 15px; padding: 10px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px;">
+                    <span style="font-size: 14px; font-weight: bold; color: #495057;">Particle Charge</span>
+                    <span style="font-size: 12px; font-weight: bold; color: #0056b3;" id="chargeLabel">Positive (+e)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="chargeToggle" onchange="updateChargeLabel()">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>2. Firing Controls</h3>
+                
+                <button id="fireBtn" class="action-btn" onclick="fireParticle()" style="padding: 12px; font-size: 14px; background-color: #28a745;">
+                    ⚛️ INJECT PARTICLE
+                </button>
+                
+                <button class="action-btn clear" onclick="clearChamber()" style="margin-top: 10px;">
+                    CLEAR CHAMBER
+                </button>
+            </div>
+        </div>
+
+        <div class="right-column">
+            
+            <div id="cameraBtn" onclick="toggleCamera()" style="background-color: #212529; color: white; padding: 12px; text-align: center; font-weight: bold; cursor: pointer; border-radius: 8px 8px 0 0; font-size: 14px; transition: 0.2s;">
+                📸 SWITCH TO FRONT VIEW
+            </div>
+            
+            <div id="canvas-container" style="border-radius: 0 0 8px 8px; overflow: hidden; border: 1px solid #dee2e6; border-top: none;"></div>
+            
+            <div class="panel-section data-readout" style="padding: 15px 20px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-top: 15px;">
+                <div style="flex: 1;">
+                    <h4 style="margin: 0 0 10px 0; color: #0056b3; font-size: 14px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Detector Telemetry (B = 1.5 T)</h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <p style="font-size: 12px; margin: 0; display: flex; flex-direction: column; align-items: center; font-weight: bold; color: #495057;">Transverse Mom. <span id="statPt" class="stat-num" style="color: #0056b3; margin-top: 5px; font-size: 14px; padding: 4px 8px;">--- GeV/c</span></p>
+                        <p style="font-size: 12px; margin: 0; display: flex; flex-direction: column; align-items: center; font-weight: bold; color: #495057;">Longitudinal Mom. <span id="statPl" class="stat-num" style="color: #0056b3; margin-top: 5px; font-size: 14px; padding: 4px 8px;">--- GeV/c</span></p>
+                        <p style="font-size: 12px; margin: 0; display: flex; flex-direction: column; align-items: center; font-weight: bold; color: #495057;">Helical Radius <span id="statR" class="stat-num" style="color: #0056b3; margin-top: 5px; font-size: 14px; padding: 4px 8px;">--- m</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 20px; font-size: 13px; color: #856404; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.05);">
+                <strong>ℹ️ Formula:</strong>
+                <span style="font-family: monospace; font-size: 14px; font-weight: bold;">p_T = 0.3 * B * R</span>
+                <span style="color: #d39e00;">|</span>
+                <span>The 1.5T magnetic field bends charged particles into a helical path.</span>
+            </div>
+        </div>
+    </div>
+    
+    <script src="sketch.js"></script>
+</body>
+</html>

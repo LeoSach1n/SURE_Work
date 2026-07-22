@@ -12,15 +12,14 @@ const TARGET_RADIUS = 20;
 const FIXED_RADIUS = 240; 
 const FIXED_VELOCITY = 10; 
 
-// 5-Groove Emitter Variables
+// 5-Groove Emitter
 const EMITTER_Y = 300;
 const GROOVE_OFFSETS = [-24, -12, 0, 12, 24]; 
 let currentSingleGroove = 0; 
 
-// Local Telemetry Array
+// Telemetry
 let telemetryData = [["Timestamp", "Target Shape", "Groove Number", "Scattering Angle (deg)"]];
 
-// Triangle Geometry Cache
 let triV1, triV2, triV3, triEdges;
 
 function setup() {
@@ -49,7 +48,6 @@ function draw() {
     fireBurst(); 
   }
 
-  // 1. Draw the Detector Screen
   let gapCenterRad = PI; 
   let gapHalfRad = radians(25); 
 
@@ -64,7 +62,7 @@ function draw() {
   drawingContext.setLineDash([]); 
   pop();
 
-  // 2. Draw Target
+
   if (!isTargetHidden) {
     push();
     drawingContext.shadowBlur = 15;
@@ -106,14 +104,12 @@ function draw() {
     pop();
   }
 
-  // 3. Draw Screen Hit Marks
   for (let mark of hitMarks) {
     fill(200, 0, 0); 
     noStroke();
     circle(mark.x, mark.y, 8);
   }
 
-  // 4. Draw Emitter
   push();
   rectMode(CENTER);
   fill(160, 160, 165); 
@@ -137,7 +133,6 @@ function draw() {
   }
   pop();
 
-  // 5. Process Projectiles
   for (let i = projectiles.length - 1; i >= 0; i--) {
     let p = projectiles[i];
     p.update(SCREEN_CENTER); 
@@ -194,7 +189,6 @@ function handleShapeSelection(shape, btnElement) {
     for (let b of buttons) { b.classList.remove('active'); }
     btnElement.classList.add('active');
     
-    // Only clears the screen, leaves CSV data intact
     clearExperiment(); 
   }
 }
@@ -241,19 +235,16 @@ function clearExperiment() {
   projectiles = [];
   hitMarks = [];
   
-  // Notice we removed the telemetry clear code from here
   for(let i=0; i<5; i++) {
       document.getElementById('angle' + i).innerText = '---°';
   }
 }
 
 function endSession() {
-  // Clears the screen and thoroughly trashes the old CSV log
   clearExperiment();
   
   telemetryData = [["Timestamp", "Target Shape", "Groove Number", "Scattering Angle (deg)"]];
   
-  // Optional confirmation for the user
   alert("Session Ended: Previous telemetry data has been wiped and a fresh log has started.");
 }
 
@@ -295,7 +286,6 @@ function drawConfetti() {
   }
 }
 
-// ---------------------------------------------------------
 class Projectile {
   constructor(startX, startY, startSpeed, grooveIndex) {
     this.pos = createVector(startX, startY);
